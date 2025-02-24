@@ -1,7 +1,7 @@
 {
   "name": "pressure_relief_app",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "src/root/index.ts",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -13,9 +13,12 @@
     "@react-navigation/native": "^7.0.14",
     "expo": "~52.0.37",
     "expo-dev-client": "~5.0.12",
+    "expo-device": "~7.0.2",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
     "react-native": "0.76.7",
+    "react-native-base64": "^0.2.1",
+    "react-native-ble-plx": "^3.5.0",
     "react-native-gesture-handler": "^2.24.0",
     "react-native-safe-area-context": "^5.2.0",
     "react-native-screens": "^4.9.0",
@@ -24,6 +27,8 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
+    "@types/react-native-base64": "^0.2.2",
+    "@types/react-native-vector-icons": "^6.4.18",
     "typescript": "^5.3.3"
   },
   "private": true
