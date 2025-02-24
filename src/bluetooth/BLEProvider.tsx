@@ -71,7 +71,7 @@ const BLEProvider = ({ children }: BLEProviderProps) => {
       clearInterval(retryIntervalId);
       setIntervalId(
         setInterval(() => {
-          startStreamingData(connectedDevice);
+          readData(connectedDevice);
         }, 1000)
       );
     } else {
@@ -215,8 +215,7 @@ const BLEProvider = ({ children }: BLEProviderProps) => {
     }
   };
 
-  const startStreamingData = async (device: Device) => {
-    await device.discoverAllServicesAndCharacteristics();
+  const readData = async (device: Device) => {
     const services = await device.services();
 
     services.forEach(async (service) => {

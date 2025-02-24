@@ -1,12 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Text } from "react-native";
-
-import { DEVICE_NAME } from "../bluetooth/bleConstants";
 import { BLEProvider } from "../bluetooth/BLEProvider";
 import IonIcon from "react-native-vector-icons/Ionicons";
-import { useBLE } from "../bluetooth/BLEProvider";
 import SettingsScreen from "../tabs/SettingsScreen";
 import HomeScreen from "../tabs/HomeScreen";
 import BluetoothScreen from "../tabs/BluetoothScreen";
