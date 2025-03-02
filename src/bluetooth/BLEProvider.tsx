@@ -24,7 +24,7 @@ import {
   DEVICE_NAME,
   SERVICE_UUID,
   STATUS_UUID,
-} from "./bleConstants";
+} from "../constants/bleConstants";
 //import toUint8Array from "urlb64touint8array";
 import { Buffer } from "buffer";
 
