@@ -15,7 +15,12 @@ const BluetoothScreen = () => {
       <Text>Bluetooth Screen</Text>
       <Text>{connectedDevice ? connectedDevice.name : "No Device"}</Text>
       <Text>{connected ? "connected" : "disconnected"}</Text>
-      <Text>{sensorData}</Text>
+      <Text>{sensorData ? sensorData[0] : "no data"}</Text>
+      <Text>{sensorData ? sensorData[1] : "no data"}</Text>
+      <Text>{sensorData ? sensorData[2] : "no data"}</Text>
+      <Text>{sensorData ? sensorData[3] : "no data"}</Text>
+      <Text>{sensorData ? sensorData[4] : "no data"}</Text>
+      <Text>{sensorData ? sensorData[5] : "no data"}</Text>
       <Button
         title={connected ? "disconnect" : "connect"}
         onPress={() => (connected ? disconnectFromDevice() : connectToDevice())}

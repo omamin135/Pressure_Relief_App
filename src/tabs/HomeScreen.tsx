@@ -1,6 +1,11 @@
-import { View, Text, Button } from "react-native";
+import { View, Text, Button, Appearance } from "react-native";
 import { useBLE } from "../bluetooth/BLEProvider";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import TimerCard from "../screen-cards/TimerCard";
+import { configurePushNotifications } from "../notifications/usePushNotifications";
+import { schedulePushNotification } from "../notifications/scheduleNotifications";
+import { useAppSettings } from "../app-settings/AppSettingProvider";
+import { useFocusEffect } from "@react-navigation/native";
 
 const HomeScreen = () => {
   // const {
@@ -51,12 +56,42 @@ const HomeScreen = () => {
 
   const { connectToDevice, connectedDevice, sensorData, connected } = useBLE();
 
+  configurePushNotifications();
+
+  const { appSettings } = useAppSettings();
+
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Home Screen</Text>
-      <Text>{connectedDevice ? connectedDevice.name : "No Device"}</Text>
-      <Text>{connected ? "connected" : "disconnected"}</Text>
-      <Text>{sensorData}</Text>
+      <TimerCard>
+        <View>
+          <Text>Home Screen</Text>
+          <Text>{connectedDevice ? connectedDevice.name : "No Device"}</Text>
+          <Text>{connected ? "connected" : "disconnected"}</Text>
+          <Text>{sensorData}</Text>
+          <Text>{appSettings.notificationsEnabled ? "true" : "false"}</Text>
+          <Text>{appSettings.reliefDurationSeconds}</Text>
+          <Text>{appSettings.reliefIntervalMin}</Text>
+        </View>
+      </TimerCard>
+      <Button
+        title="change color"
+        onPress={() => {
+          Appearance.setColorScheme(
+            Appearance.getColorScheme() === "light" ? "dark" : "light"
+          );
+          console.log(Appearance.getColorScheme());
+        }}
+      ></Button>
+      <Button
+        onPress={async () => {
+          schedulePushNotification({
+            title: "Reminder",
+            body: "Reminder to perform pressure relief!",
+          });
+        }}
+        title="Notify"
+        color="#0a7ea4"
+      ></Button>
     </View>
   );
 };
