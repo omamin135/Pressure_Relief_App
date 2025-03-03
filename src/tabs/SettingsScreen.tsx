@@ -1,4 +1,4 @@
-import { View, Text, Switch } from "react-native";
+import { View, Text, Switch, Button } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import MultiSlider from "@ptomasroos/react-native-multi-slider";
@@ -10,38 +10,28 @@ import {
   PRESSURE_RELIEF_DURATION_STEP,
   PRESSURE_RELIEF_INTERVAL_STEP,
 } from "../constants/settingsConstants";
-
-const defaultSettings = {
-  notificationsEndabled: true,
-  reliefDurationSeconds: 120,
-  reliefIntervalMin: 20,
-};
+import { useAppSettings } from "../app-settings/AppSettingProvider";
 
 const SettingsScreen = () => {
+  const { appSettings, setSettings } = useAppSettings();
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(
-    defaultSettings.notificationsEndabled
+    appSettings.notificationsEnabled
   );
   const [reliefDurationSeconds, setReliefDurationSeconds] = useState<number>(
-    defaultSettings.reliefDurationSeconds
+    appSettings.reliefDurationSeconds
   );
   const [reliefIntervalMin, setReliefIntervalMin] = useState<number>(
-    defaultSettings.reliefIntervalMin
+    appSettings.reliefIntervalMin
   );
 
-  //Load saved settings on app startup
+  // update the appSettings context to changes
   useEffect(() => {
-    const loadSettings = async () => {
-      const notifications = await AsyncStorage.getItem("notifications");
-      if (notifications !== null)
-        setNotificationsEnabled(JSON.parse(notifications));
-    };
-    loadSettings();
-  }, []);
-
-  const toggleNotifications = async (value: boolean) => {
-    setNotificationsEnabled(value);
-    await AsyncStorage.setItem("notifications", JSON.stringify(value));
-  };
+    setSettings({
+      notificationsEnabled: notificationsEnabled,
+      reliefDurationSeconds: reliefDurationSeconds,
+      reliefIntervalMin: reliefIntervalMin,
+    });
+  }, [notificationsEnabled, reliefDurationSeconds, reliefIntervalMin]);
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -52,7 +42,7 @@ const SettingsScreen = () => {
           <Text>Enable Notifications</Text>
           <Switch
             value={notificationsEnabled}
-            onValueChange={toggleNotifications}
+            onValueChange={setNotificationsEnabled}
           />
           <View>
             <Text>Relief Duration</Text>

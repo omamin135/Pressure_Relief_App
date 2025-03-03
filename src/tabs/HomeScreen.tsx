@@ -1,9 +1,11 @@
 import { View, Text, Button, Appearance } from "react-native";
 import { useBLE } from "../bluetooth/BLEProvider";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import TimerCard from "../screen-cards/TimerCard";
 import { configurePushNotifications } from "../notifications/usePushNotifications";
 import { schedulePushNotification } from "../notifications/scheduleNotifications";
+import { useAppSettings } from "../app-settings/AppSettingProvider";
+import { useFocusEffect } from "@react-navigation/native";
 
 const HomeScreen = () => {
   // const {
@@ -56,6 +58,8 @@ const HomeScreen = () => {
 
   configurePushNotifications();
 
+  const { appSettings } = useAppSettings();
+
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <TimerCard>
@@ -64,6 +68,9 @@ const HomeScreen = () => {
           <Text>{connectedDevice ? connectedDevice.name : "No Device"}</Text>
           <Text>{connected ? "connected" : "disconnected"}</Text>
           <Text>{sensorData}</Text>
+          <Text>{appSettings.notificationsEnabled ? "true" : "false"}</Text>
+          <Text>{appSettings.reliefDurationSeconds}</Text>
+          <Text>{appSettings.reliefIntervalMin}</Text>
         </View>
       </TimerCard>
       <Button

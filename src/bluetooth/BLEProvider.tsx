@@ -36,13 +36,15 @@ interface BLEContextType {
   disconnectFromDevice: () => void;
 }
 
-type BLEProviderProps = React.PropsWithChildren<{}>;
+interface BLEProviderProps {
+  children?: React.ReactNode | undefined;
+}
 
 const BLEContext = createContext<BLEContextType>({
   connectedDevice: null,
   sensorData: null,
   connected: false,
-  connectToDevice: function (): void {
+  connectToDevice: (): void => {
     throw new Error("Function not implemented.");
   },
   disconnectFromDevice: (): void => {
@@ -50,7 +52,7 @@ const BLEContext = createContext<BLEContextType>({
   },
 });
 
-const BLEProvider = ({ children }: BLEProviderProps) => {
+export const BLEProvider = ({ children }: BLEProviderProps) => {
   const bleManager = useMemo(() => new BleManager(), []);
 
   const [device, setDevice] = useState<Device | null>(null);
@@ -79,7 +81,7 @@ const BLEProvider = ({ children }: BLEProviderProps) => {
       clearInterval(retryIntervalId);
       setRetryIntervalId(
         setInterval(() => {
-          console.log("retry");
+          //console.log("retry");
           connectToDevice();
         }, 10000)
       );
@@ -286,8 +288,6 @@ const BLEProvider = ({ children }: BLEProviderProps) => {
   );
 };
 
-const useBLE = () => {
+export const useBLE = () => {
   return useContext(BLEContext);
 };
-
-export { BLEProvider, useBLE };
