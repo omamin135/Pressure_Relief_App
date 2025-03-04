@@ -1,4 +1,5 @@
 import * as Notifications from "expo-notifications";
+import { useAppSettings } from "../app-settings/AppSettingProvider";
 
 export interface NotificationsParams {
   title?: string | null | undefined;
