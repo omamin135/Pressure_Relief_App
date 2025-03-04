@@ -62,17 +62,17 @@ const HomeScreen = () => {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <TimerCard>
-        <View>
-          <Text>Home Screen</Text>
-          <Text>{connectedDevice ? connectedDevice.name : "No Device"}</Text>
-          <Text>{connected ? "connected" : "disconnected"}</Text>
-          <Text>{sensorData}</Text>
-          <Text>{appSettings.notificationsEnabled ? "true" : "false"}</Text>
-          <Text>{appSettings.reliefDurationSeconds}</Text>
-          <Text>{appSettings.reliefIntervalMin}</Text>
-        </View>
-      </TimerCard>
+      <TimerCard></TimerCard>
+      {/* <View>
+        <Text>Home Screen</Text>
+        <Text>{connectedDevice ? connectedDevice.name : "No Device"}</Text>
+        <Text>{connected ? "connected" : "disconnected"}</Text>
+        <Text>{sensorData}</Text>
+        <Text>{appSettings.notificationsEnabled ? "true" : "false"}</Text>
+        <Text>{appSettings.reliefDurationSeconds}</Text>
+        <Text>{appSettings.reliefIntervalMin}</Text>
+      </View>
+
       <Button
         title="change color"
         onPress={() => {
@@ -91,7 +91,7 @@ const HomeScreen = () => {
         }}
         title="Notify"
         color="#0a7ea4"
-      ></Button>
+      ></Button> */}
     </View>
   );
 };

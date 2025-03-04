@@ -7,6 +7,7 @@ import SettingsScreen from "../tabs/SettingsScreen";
 import HomeScreen from "../tabs/HomeScreen";
 import BluetoothScreen from "../tabs/BluetoothScreen";
 import { AppSettingProvider } from "../app-settings/AppSettingProvider";
+import { PressureReliefStatesProvider } from "../state/PressureReliefStatesProvider";
 
 const Tab = createBottomTabNavigator();
 
@@ -14,25 +15,27 @@ export default function App() {
   return (
     <AppSettingProvider>
       <BLEProvider>
-        <NavigationContainer>
-          <Tab.Navigator
-            screenOptions={({ route }) => ({
-              tabBarIcon: ({ color, size }) => {
-                let iconName =
-                  route.name === "Home" ? "home-outline" : "settings-outline";
-                return <IonIcon name={iconName} size={size} color={color} />;
-              },
-              tabBarActiveTintColor: "tomato",
-              tabBarInactiveTintColor: "gray",
-              animationEnabled: false,
-            })}
-            initialRouteName="Home"
-          >
-            <Tab.Screen name="Bluetooth" component={BluetoothScreen} />
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Settings" component={SettingsScreen} />
-          </Tab.Navigator>
-        </NavigationContainer>
+        <PressureReliefStatesProvider>
+          <NavigationContainer>
+            <Tab.Navigator
+              screenOptions={({ route }) => ({
+                tabBarIcon: ({ color, size }) => {
+                  let iconName =
+                    route.name === "Home" ? "home-outline" : "settings-outline";
+                  return <IonIcon name={iconName} size={size} color={color} />;
+                },
+                tabBarActiveTintColor: "tomato",
+                tabBarInactiveTintColor: "gray",
+                animationEnabled: false,
+              })}
+              initialRouteName="Home"
+            >
+              <Tab.Screen name="Bluetooth" component={BluetoothScreen} />
+              <Tab.Screen name="Home" component={HomeScreen} />
+              <Tab.Screen name="Settings" component={SettingsScreen} />
+            </Tab.Navigator>
+          </NavigationContainer>
+        </PressureReliefStatesProvider>
       </BLEProvider>
     </AppSettingProvider>
   );
