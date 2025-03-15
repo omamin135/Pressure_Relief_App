@@ -8,10 +8,18 @@ import HomeScreen from "../tabs/HomeScreen";
 import BluetoothScreen from "../tabs/BluetoothScreen";
 import { AppSettingProvider } from "../app-settings/AppSettingProvider";
 import { PressureReliefStatesProvider } from "../state/PressureReliefStatesProvider";
+import {
+  useFonts,
+  AlbertSans_400Regular,
+} from "@expo-google-fonts/albert-sans";
+import useColors from "../theme/useColors";
+import { StyleSheet, Text } from "react-native";
 
 const Tab = createBottomTabNavigator();
 
-export default function App() {
+const App = () => {
+  const colors = useColors();
+
   return (
     <AppSettingProvider>
       <BLEProvider>
@@ -27,16 +35,73 @@ export default function App() {
                 tabBarActiveTintColor: "tomato",
                 tabBarInactiveTintColor: "gray",
                 animationEnabled: false,
+                headerTitle: (props) => (
+                  // rendering a custome header title instead of default title
+                  // to better customize the look
+                  <Text
+                    numberOfLines={2}
+                    style={{
+                      ...styles.headerTextStyle,
+                      color: colors.text.primary,
+                    }}
+                  >
+                    {props.children}
+                  </Text>
+                ),
+                headerStyle: {
+                  ...styles.headerStyle,
+                  backgroundColor: colors.background.secondary,
+                },
+                headerTitleAlign: "center",
               })}
               initialRouteName="Home"
             >
-              <Tab.Screen name="Bluetooth" component={BluetoothScreen} />
-              <Tab.Screen name="Home" component={HomeScreen} />
-              <Tab.Screen name="Settings" component={SettingsScreen} />
+              <Tab.Screen
+                name="Bluetooth"
+                options={{
+                  title: "Bluetooth Settings",
+                  tabBarLabel: "Bluetooth",
+                }}
+                component={BluetoothScreen}
+              />
+              <Tab.Screen
+                name="Home"
+                options={{
+                  title: "Pressure Relief Tracking",
+                  tabBarLabel: "Home",
+                }}
+                component={HomeScreen}
+              />
+              <Tab.Screen
+                name="Settings"
+                options={{
+                  title: "App Settings",
+                  tabBarLabel: "Settings",
+                }}
+                component={SettingsScreen}
+              />
             </Tab.Navigator>
           </NavigationContainer>
         </PressureReliefStatesProvider>
       </BLEProvider>
     </AppSettingProvider>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  headerStyle: {
+    elevation: 0, // Removes shadow on Android
+    shadowOpacity: 0, // Removes shadow on iOS
+    borderBottomWidth: 0, // Removes the bottom border
+    height: 90,
+  },
+  headerTextStyle: {
+    fontSize: 30,
+    fontWeight: "bold",
+    fontFamily: "AlbertSans",
+    textAlign: "center",
+    flexWrap: "wrap",
+  },
+});
+
+export default App;

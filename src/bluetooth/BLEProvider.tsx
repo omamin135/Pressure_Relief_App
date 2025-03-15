@@ -57,6 +57,7 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
 
   const [device, setDevice] = useState<Device | null>(null);
   const [sensorData, setSensorData] = useState<number[]>([]);
+  const [sensorStatuses, setSensorStatuses] = useState<number[]>([0, 0, 0]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [connected, setConnected] = useState<boolean>(false);
   const [retryIntervalId, setRetryIntervalId] = useState<NodeJS.Timeout>();
@@ -252,6 +253,17 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
               console.log("Decoded Floats:", floats);
 
               setSensorData(floats);
+            });
+          } else if (x.uuid === STATUS_UUID) {
+            x.read().then((c) => {
+              if (!c.value) {
+                console.log("Empty Status Value");
+                return;
+              }
+
+              //const rawData = Buffer.from(c.value, "base64");
+
+              //setSensorStatuses(rawData);
             });
           }
         }

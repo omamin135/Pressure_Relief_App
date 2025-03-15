@@ -19,7 +19,7 @@ interface DataBufferType {
 }
 
 const MAX_BUFFER_SIZE = 5;
-const TIMEOUT_SEC = 60;
+const TIMEOUT_SEC = 10;
 
 const PressureReliefStatesContext =
   createContext<PressureReliefStatesContextType>({
@@ -49,14 +49,14 @@ export const PressureReliefStatesProvider = ({
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout>();
   const [stateLock, setStateLock] = useState<boolean>(false);
 
-  const sensor1Index = 0;
-  const sensor2Index = 1;
-  const sensor3Index = 2;
+  const sensor1Index = 1;
+  const sensor2Index = 3;
+  const sensor3Index = 5;
 
   const thresholds = {
-    sensor1: 15,
-    sensor2: 15,
-    sensor3: 15,
+    sensor1: 60,
+    sensor2: 60,
+    sensor3: 60,
   };
 
   useEffect(() => {
@@ -78,6 +78,8 @@ export const PressureReliefStatesProvider = ({
   }, [sensorData]);
 
   useEffect(() => {
+    console.log(stateLock);
+    console.log(dataBuffer);
     if (!stateLock && !pressureReliefMode) {
       setPressureReliefState(checkForPressureRelief());
     }
@@ -116,6 +118,22 @@ export const PressureReliefStatesProvider = ({
     return Object.entries(dataBuffer).every(([sensor, values]) =>
       values.every(
         (value: number) => value > thresholds[sensor as keyof typeof thresholds]
+      )
+    );
+  };
+
+  const checkIfExitPressureRelief = (): boolean => {
+    const bufferFilled = Object.values(dataBuffer).every(
+      (sensorData) => sensorData.length === 5
+    );
+
+    // Do nothing if buffer is not filled
+    if (!bufferFilled) return false;
+
+    // check if all the values in the sensor buffers are above the set threshold
+    return Object.entries(dataBuffer).every(([sensor, values]) =>
+      values.every(
+        (value: number) => value < thresholds[sensor as keyof typeof thresholds]
       )
     );
   };

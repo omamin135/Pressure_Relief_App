@@ -1,4 +1,11 @@
-import { View, Text, Button, Appearance } from "react-native";
+import {
+  View,
+  Text,
+  Button,
+  Appearance,
+  SafeAreaView,
+  ScrollView,
+} from "react-native";
 import { useBLE } from "../bluetooth/BLEProvider";
 import { useEffect, useState } from "react";
 import TimerCard from "../screen-cards/TimerCard";
@@ -6,6 +13,11 @@ import { configurePushNotifications } from "../notifications/usePushNotification
 import { schedulePushNotification } from "../notifications/scheduleNotifications";
 import { useAppSettings } from "../app-settings/AppSettingProvider";
 import { useFocusEffect } from "@react-navigation/native";
+import AngleDisplay from "../screen-cards/AngleDisplay";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import CircularProgress from "../components/CircularProgress";
+import useColors from "../theme/useColors";
+import { StyleSheet } from "react-native";
 
 const HomeScreen = () => {
   // const {
@@ -60,10 +72,20 @@ const HomeScreen = () => {
 
   const { appSettings } = useAppSettings();
 
+  const colors = useColors();
+
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <TimerCard></TimerCard>
-      {/* <View>
+    <SafeAreaProvider>
+      <SafeAreaView>
+        <ScrollView>
+          <View style={styles.homeContainer}>
+            {/* <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          > */}
+            <TimerCard></TimerCard>
+
+            <AngleDisplay></AngleDisplay>
+            {/* <View>
         <Text>Home Screen</Text>
         <Text>{connectedDevice ? connectedDevice.name : "No Device"}</Text>
         <Text>{connected ? "connected" : "disconnected"}</Text>
@@ -92,8 +114,19 @@ const HomeScreen = () => {
         title="Notify"
         color="#0a7ea4"
       ></Button> */}
-    </View>
+            {/* </View> */}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
+
+const styles = StyleSheet.create({
+  homeContainer: {
+    display: "flex",
+    alignItems: "center",
+  },
+});
 
 export default HomeScreen;
