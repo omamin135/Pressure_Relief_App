@@ -8,10 +8,6 @@ import HomeScreen from "../tabs/HomeScreen";
 import BluetoothScreen from "../tabs/BluetoothScreen";
 import { AppSettingProvider } from "../app-settings/AppSettingProvider";
 import { PressureReliefStatesProvider } from "../state/PressureReliefStatesProvider";
-import {
-  useFonts,
-  AlbertSans_400Regular,
-} from "@expo-google-fonts/albert-sans";
 import useColors from "../theme/useColors";
 import { StyleSheet, Text } from "react-native";
 
@@ -90,8 +86,8 @@ const App = () => {
 
 const styles = StyleSheet.create({
   headerStyle: {
-    elevation: 0, // Removes shadow on Android
-    shadowOpacity: 0, // Removes shadow on iOS
+    elevation: 0, // Removes header shadow on Android
+    shadowOpacity: 0, // Removes header shadow on iOS
     borderBottomWidth: 0, // Removes the bottom border
     height: 90,
   },

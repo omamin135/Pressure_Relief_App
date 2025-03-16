@@ -1,15 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Card from "../components/Card";
 import useColors from "../theme/useColors";
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  StyleSheet,
-  Switch,
-  Animated,
-  Easing,
-} from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useAppSettings } from "../app-settings/AppSettingProvider";
 import { schedulePushNotification } from "../notifications/scheduleNotifications";
 import { usePressureReliefStates } from "../state/PressureReliefStatesProvider";
@@ -121,7 +113,7 @@ const TimerCard = () => {
   };
 
   return (
-    <Card color={colors.background.main}>
+    <Card>
       <View style={styles.container}>
         <Text style={{ ...styles.header, color: colors.text.primary }}>
           {paused
@@ -131,7 +123,7 @@ const TimerCard = () => {
             ? "Start Routine Now"
             : pressureReliefMode
             ? "Routine Started"
-            : "Resting"}
+            : "Upright"}
         </Text>
         <CircularProgress
           progress={radialTimePercentage}

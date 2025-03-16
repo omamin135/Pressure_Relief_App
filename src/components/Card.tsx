@@ -1,13 +1,16 @@
 import { View, StyleSheet } from "react-native";
+import useColors from "../theme/useColors";
 
 interface CardProps {
-  color: string;
   children?: JSX.Element;
 }
 
-const Card = ({ color, children }: CardProps) => {
+const Card = ({ children }: CardProps) => {
+  const colors = useColors();
   return (
-    <View style={{ ...styles.card, backgroundColor: color }}>{children}</View>
+    <View style={{ ...styles.card, backgroundColor: colors.background.main }}>
+      {children}
+    </View>
   );
 };
 

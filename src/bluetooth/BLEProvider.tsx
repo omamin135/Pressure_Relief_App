@@ -6,8 +6,6 @@ import React, {
   useContext,
   useMemo,
 } from "react";
-//import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { PermissionsAndroid, Platform } from "react-native";
 import {
   BleError,
@@ -15,22 +13,46 @@ import {
   Characteristic,
   Device,
 } from "react-native-ble-plx";
-
 import * as ExpoDevice from "expo-device";
-
-import base64 from "react-native-base64";
 import {
+  ANGLE_INDEX,
   ANGLE_UUID,
+  BACK_DEFAULT_ANGLE,
+  BACK_SENSOR_NUMBER,
   DEVICE_NAME,
-  SERVICE_UUID,
+  LEG_DEFAULT_ANGLE,
+  LEG_SENSOR_NUMBER,
+  SEAT_DEFAULT_ANGLE,
+  SEAT_SENSOR_NUMBER,
   STATUS_UUID,
 } from "../constants/bleConstants";
-//import toUint8Array from "urlb64touint8array";
 import { Buffer } from "buffer";
+import { anglesType, displayAnglesType, sensorStatusType } from "./dataTypes";
+
+// interface anglesType {
+//   backAngle: number;
+//   seatAngle: number;
+//   legAngle: number;
+// }
+
+// interface displayAnglesType {
+//   backSeatAngle: number;
+//   seatAngle: number;
+//   legSeatAngle: number;
+// }
+
+// interface sensorStatusType {
+//   backSensor: boolean;
+//   seatSensor: boolean;
+//   legSensor: boolean;
+// }
 
 interface BLEContextType {
   connectedDevice: Device | undefined | null;
   sensorData: number[] | null;
+  angles: anglesType;
+  displayAngles: displayAnglesType;
+  sensorStatuses: sensorStatusType;
   connected: boolean;
   connectToDevice: () => void;
   disconnectFromDevice: () => void;
@@ -44,6 +66,13 @@ const BLEContext = createContext<BLEContextType>({
   connectedDevice: null,
   sensorData: null,
   connected: false,
+  angles: {
+    backAngle: BACK_DEFAULT_ANGLE,
+    seatAngle: SEAT_DEFAULT_ANGLE,
+    legAngle: LEG_DEFAULT_ANGLE,
+  },
+  displayAngles: { backSeatAngle: 0, seatAngle: 0, legSeatAngle: 0 },
+  sensorStatuses: { backSensor: false, seatSensor: false, legSensor: false },
   connectToDevice: (): void => {
     throw new Error("Function not implemented.");
   },
@@ -52,12 +81,29 @@ const BLEContext = createContext<BLEContextType>({
   },
 });
 
+// return angles, and display angles.
+// check if display angles is set correctly on initial startup
+
 export const BLEProvider = ({ children }: BLEProviderProps) => {
   const bleManager = useMemo(() => new BleManager(), []);
 
   const [device, setDevice] = useState<Device | null>(null);
-  const [sensorData, setSensorData] = useState<number[]>([]);
-  const [sensorStatuses, setSensorStatuses] = useState<number[]>([0, 0, 0]);
+  const [sensorData, setSensorData] = useState<number[]>([0, 0, 0, 0, 0, 0]);
+  const [angles, setAngles] = useState<anglesType>({
+    backAngle: BACK_DEFAULT_ANGLE,
+    seatAngle: SEAT_DEFAULT_ANGLE,
+    legAngle: LEG_DEFAULT_ANGLE,
+  });
+  const [displayAngles, setDisplayAngles] = useState<displayAnglesType>({
+    backSeatAngle: 0,
+    seatAngle: 0,
+    legSeatAngle: 0,
+  });
+  const [sensorStatuses, setSensorStatuses] = useState<sensorStatusType>({
+    backSensor: false,
+    seatSensor: false,
+    legSensor: false,
+  });
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [connected, setConnected] = useState<boolean>(false);
   const [retryIntervalId, setRetryIntervalId] = useState<NodeJS.Timeout>();
@@ -66,6 +112,11 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
   useEffect(() => {
     connectToDevice();
   }, []);
+
+  useEffect(() => {
+    console.log("display");
+    console.log(displayAngles);
+  }, [displayAngles]);
 
   useEffect(() => {
     if (connectedDevice && connected) {
@@ -92,6 +143,24 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
       clearInterval(retryIntervalId);
     };
   }, [connectedDevice, connected]);
+
+  useEffect(() => {
+    setAngles({
+      backAngle: sensorStatuses.backSensor
+        ? sensorData[BACK_SENSOR_NUMBER + ANGLE_INDEX]
+        : angles.backAngle,
+      seatAngle: sensorStatuses.seatSensor
+        ? sensorData[SEAT_SENSOR_NUMBER + ANGLE_INDEX]
+        : angles.seatAngle,
+      legAngle: sensorStatuses.legSensor
+        ? sensorData[LEG_SENSOR_NUMBER + ANGLE_INDEX]
+        : angles.legAngle,
+    });
+  }, [sensorData]);
+
+  useEffect(() => {
+    computeDisplayAngles();
+  }, [angles]);
 
   const connectToDevice = async () => {
     const isPermissionsEnabled = await requestPermissions();
@@ -226,33 +295,52 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
         service.uuid
       );
 
+      const statusCharacteristic = characteristics.find(
+        (x) => x.uuid === STATUS_UUID
+      );
+      const angleCharacteristic = characteristics.find(
+        (x) => x.uuid === ANGLE_UUID
+      );
+
+      statusCharacteristic?.read().then((c) => {
+        const statuses = decodeSensorStatusData(c);
+
+        setSensorStatuses({
+          backSensor: statuses[BACK_SENSOR_NUMBER] === 1,
+          seatSensor: statuses[SEAT_SENSOR_NUMBER] === 1,
+          legSensor: statuses[LEG_SENSOR_NUMBER] === 1,
+        });
+      });
+
+      statusCharacteristic?.read().then((c) => {
+        const floats = decodeAngleData(c);
+
+        setSensorData(floats);
+
+        console.log("Decoded Floats:", floats);
+      });
+
       characteristics.forEach(
         (x) => {
           if (x.uuid === ANGLE_UUID) {
             x.read().then((c) => {
-              if (!c.value) {
-                console.log("Empty Value");
-                return;
-              }
-
-              const rawBytes = Buffer.from(c.value, "base64");
-
-              const hexString = rawBytes.toString("hex");
-
-              const bytes = [];
-              for (let i = 0; i < hexString.length; i += 2) {
-                bytes.push(parseInt(hexString.slice(i, i + 2), 16));
-              }
-
-              const floats = [];
-
-              for (let i = 0; i < bytes.length; i += 4) {
-                floats.push(bytes2Float(bytes.slice(i, i + 4)));
-              }
+              const floats = decodeAngleData(c);
 
               console.log("Decoded Floats:", floats);
 
               setSensorData(floats);
+              // const rawBytes = Buffer.from(c.value, "base64");
+              // const hexString = rawBytes.toString("hex");
+              // const bytes = [];
+              // for (let i = 0; i < hexString.length; i += 2) {
+              //   bytes.push(parseInt(hexString.slice(i, i + 2), 16));
+              // }
+              // const floats = [];
+              // for (let i = 0; i < bytes.length; i += 4) {
+              //   floats.push(bytes2Float(bytes.slice(i, i + 4)));
+              // }
+              // console.log("Decoded Floats:", floats);
+              // setSensorData(floats);
             });
           } else if (x.uuid === STATUS_UUID) {
             x.read().then((c) => {
@@ -274,6 +362,31 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
     });
   };
 
+  const decodeAngleData = (c: Characteristic) => {
+    if (!c.value) return [0, 0, 0, 0, 0, 0];
+    const rawBytes = Buffer.from(c.value, "base64");
+
+    const hexString = rawBytes.toString("hex");
+
+    const bytes = [];
+    for (let i = 0; i < hexString.length; i += 2) {
+      bytes.push(parseInt(hexString.slice(i, i + 2), 16));
+    }
+
+    const floats = [0, 0, 0, 0, 0, 0];
+
+    for (let i = 0; i < bytes.length; i += 4) {
+      floats.push(bytes2Float(bytes.slice(i, i + 4)));
+    }
+
+    return floats;
+  };
+
+  const decodeSensorStatusData = (c: Characteristic) => {
+    if (!c.value) return [0, 0, 0];
+    return [1, 1, 1];
+  };
+
   const bytes2Float = (byteArray: number[]): number => {
     // bytes in little-endian format
     const littleEndianBytes = new Uint8Array(byteArray);
@@ -285,12 +398,27 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
     return view.getFloat32(0, true);
   };
 
+  // returns the angles used in the angle display
+  // [backSeatAngle] the angle from the seat to the back rest
+  // [seatAngle] the angle of the seat up from the horizontal
+  // [legSeatAngle] the angle from the leg rest to the bottom of the seat
+  const computeDisplayAngles = () => {
+    setDisplayAngles({
+      backSeatAngle: 180 - angles.backAngle - angles.seatAngle,
+      seatAngle: angles.seatAngle,
+      legSeatAngle: 180 + angles.legAngle - angles.seatAngle,
+    });
+  };
+
   return (
     <BLEContext.Provider
       value={{
         connectedDevice,
         sensorData,
         connected,
+        angles,
+        displayAngles,
+        sensorStatuses,
         connectToDevice,
         disconnectFromDevice,
       }}

@@ -13,11 +13,13 @@ import { configurePushNotifications } from "../notifications/usePushNotification
 import { schedulePushNotification } from "../notifications/scheduleNotifications";
 import { useAppSettings } from "../app-settings/AppSettingProvider";
 import { useFocusEffect } from "@react-navigation/native";
-import AngleDisplay from "../screen-cards/AngleDisplay";
+import AngleDisplayCard from "../screen-cards/AngleDisplay";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import CircularProgress from "../components/CircularProgress";
 import useColors from "../theme/useColors";
 import { StyleSheet } from "react-native";
+import WheelchairAngleDiagram from "../components/angle-display/WheelchairAngleDiagram";
+import Chip from "../components/Chip";
 
 const HomeScreen = () => {
   // const {
@@ -74,47 +76,17 @@ const HomeScreen = () => {
 
   const colors = useColors();
 
+  const [leg, setAdjustedLegAngle] = useState(-90);
+  const [seat, setAdjustedSeatAngle] = useState(10);
+  const [back, setAdjustedBackAngle] = useState(60);
+
   return (
     <SafeAreaProvider>
       <SafeAreaView>
-        <ScrollView>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View style={styles.homeContainer}>
-            {/* <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          > */}
             <TimerCard></TimerCard>
-
-            <AngleDisplay></AngleDisplay>
-            {/* <View>
-        <Text>Home Screen</Text>
-        <Text>{connectedDevice ? connectedDevice.name : "No Device"}</Text>
-        <Text>{connected ? "connected" : "disconnected"}</Text>
-        <Text>{sensorData}</Text>
-        <Text>{appSettings.notificationsEnabled ? "true" : "false"}</Text>
-        <Text>{appSettings.reliefDurationSeconds}</Text>
-        <Text>{appSettings.reliefIntervalMin}</Text>
-      </View>
-
-      <Button
-        title="change color"
-        onPress={() => {
-          Appearance.setColorScheme(
-            Appearance.getColorScheme() === "light" ? "dark" : "light"
-          );
-          console.log(Appearance.getColorScheme());
-        }}
-      ></Button>
-      <Button
-        onPress={async () => {
-          schedulePushNotification({
-            title: "Reminder",
-            body: "Reminder to perform pressure relief!",
-          });
-        }}
-        title="Notify"
-        color="#0a7ea4"
-      ></Button> */}
-            {/* </View> */}
+            <AngleDisplayCard></AngleDisplayCard>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -124,8 +96,12 @@ const HomeScreen = () => {
 
 const styles = StyleSheet.create({
   homeContainer: {
+    flex: 1,
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: 20,
   },
 });
 
