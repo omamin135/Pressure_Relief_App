@@ -40,7 +40,10 @@ export const colors = {
       primary: "rgb(10, 13, 18)",
       supporting: "rgb(113, 118, 128)",
     },
-    background: "rgb(240, 240, 240)",
+    background: {
+      main: "rgb(255, 255, 255)",
+      secondary: "rgb(240, 240, 240)",
+    },
     border: "rgb(213, 215, 218)",
     icons: "rgb(164, 167, 174)",
   },
@@ -54,7 +57,10 @@ export const colors = {
       primary: "rgb(10, 13, 18)",
       supporting: "rgb(113, 118, 128)",
     },
-    background: "rgb(240, 240, 240)",
+    background: {
+      main: "rgb(255, 255, 255)",
+      secondary: "rgb(240, 240, 240)",
+    },
     border: "rgb(213, 215, 218)",
     icons: "rgb(164, 167, 174)",
   },

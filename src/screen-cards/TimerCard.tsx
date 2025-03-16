@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import Card from "../components/Card";
 import useColors from "../theme/useColors";
-import { TouchableOpacity, View, Text, StyleSheet, Switch } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useAppSettings } from "../app-settings/AppSettingProvider";
 import { schedulePushNotification } from "../notifications/scheduleNotifications";
 import { usePressureReliefStates } from "../state/PressureReliefStatesProvider";
+import CircularProgress from "../components/CircularProgress";
+import StyledButton from "../components/StyledButton";
+import StyledSwitch from "../components/StyledSwitch";
 
 const TimerCard = () => {
   const colors = useColors();
   const { appSettings, setSettings } = useAppSettings();
   const { pressureReliefMode, setPressureReliefState, setStateLock } =
     usePressureReliefStates();
+  const [radialTimePercentage, setRadialTimePercentage] = useState(0);
 
   const [time, setTime] = useState(0);
   // const [pressureReliefState, setPressureReliefState] =
@@ -51,6 +55,12 @@ const TimerCard = () => {
         });
       }
       setPressureReliefState(false);
+    }
+
+    if (pressureReliefMode) {
+      updateRadialPercentage(time, appSettings.reliefDurationSeconds);
+    } else {
+      updateRadialPercentage(time, appSettings.reliefIntervalMin * 60);
     }
   }, [time]);
 
@@ -98,10 +108,14 @@ const TimerCard = () => {
     )}`;
   };
 
+  const updateRadialPercentage = (time: number, totalTime: number) => {
+    if (totalTime - time >= 0) setRadialTimePercentage(time / totalTime);
+  };
+
   return (
-    <Card color={colors.background}>
+    <Card>
       <View style={styles.container}>
-        <Text style={styles.header}>
+        <Text style={{ ...styles.header, color: colors.text.primary }}>
           {paused
             ? "Tracking Paused"
             : appSettings.reliefIntervalMin * 60 - time < 0 &&
@@ -109,45 +123,91 @@ const TimerCard = () => {
             ? "Start Routine Now"
             : pressureReliefMode
             ? "Routine Started"
-            : "Resting"}
+            : "Upright"}
         </Text>
-        {pressureReliefMode ? (
-          <>
-            <Text style={styles.timeText}>
-              {formatTime(appSettings.reliefDurationSeconds - time)}
-            </Text>
-            <Text style={styles.subHeader}>Left of Pressure Relief</Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.timeText}>
-              {formatTime(appSettings.reliefIntervalMin * 60 - time)}
-            </Text>
-            <Text style={styles.subHeader}>Until Next Pressure Relief</Text>
-          </>
-        )}
-        <View style={styles.buttonContainer}>
-          <>
-            <TouchableOpacity
-              style={[styles.button, styles.startButton]}
+        <CircularProgress
+          progress={radialTimePercentage}
+          size={220}
+          strokeWidth={12}
+          disabled={paused}
+          color={
+            pressureReliefMode ? colors.secondary.main : colors.primary.main
+          }
+          backgroundColor={colors.background.secondary}
+        >
+          <View style={styles.timeContainer}>
+            {pressureReliefMode ? (
+              <>
+                <Text
+                  style={{
+                    ...styles.timeText,
+                    color: colors.text.primary,
+                    opacity: paused ? 0.4 : 1,
+                  }}
+                >
+                  {formatTime(appSettings.reliefDurationSeconds - time)}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.timeSubHeader,
+                    color: colors.text.supporting,
+                    opacity: paused ? 0.4 : 1,
+                  }}
+                >
+                  Left of Pressure Relief
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text
+                  style={{
+                    ...styles.timeText,
+                    color: colors.text.primary,
+                    opacity: paused ? 0.4 : 1,
+                  }}
+                >
+                  {formatTime(appSettings.reliefIntervalMin * 60 - time)}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.timeSubHeader,
+                    color: colors.text.supporting,
+                    opacity: paused ? 0.4 : 1,
+                  }}
+                >
+                  Until Next Pressure Relief
+                </Text>
+              </>
+            )}
+          </View>
+        </CircularProgress>
+        <View>
+          <View style={styles.buttonContainer}>
+            <StyledButton
+              title={pressureReliefMode ? "Stop Routine" : "Start Routine"}
+              assessabilityHint={
+                pressureReliefMode
+                  ? "Stops pressure relief routine timer"
+                  : "Starts pressure relief routine timer"
+              }
+              disabled={paused}
+              color={colors.primary.main}
               onPress={togglePressureReliefState}
+            />
+            <StyledButton
+              title="Reset"
+              assessabilityHint=""
               disabled={paused}
-            >
-              <Text style={styles.buttonText}>
-                {pressureReliefMode ? "Stop Timer" : "Start Timer"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.resetButton]}
+              color={colors.secondary.main}
               onPress={resetTimer}
-              disabled={paused}
-            >
-              <Text style={styles.buttonText}>Reset</Text>
-            </TouchableOpacity>
-          </>
-          <Switch
+            />
+          </View>
+          <StyledSwitch
             value={paused}
-            onValueChange={(paused) => {
+            label="Pause Tracking"
+            color={colors.primary.main}
+            assessabilityHint="Pauses the tracking state"
+            onToggle={(paused) => {
               togglePausedState();
               if (paused) {
                 pauseTimer();
@@ -156,15 +216,6 @@ const TimerCard = () => {
               }
             }}
           />
-
-          {/* {!running && (
-            <TouchableOpacity
-              style={[styles.button, styles.resumeButton]}
-              onPress={resumeStopwatch}
-            >
-              <Text style={styles.buttonText}>Resume</Text>
-            </TouchableOpacity>
-          )} */}
         </View>
       </View>
     </Card>
@@ -176,23 +227,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    fontFamily: "AlbertSans",
   },
   header: {
     fontSize: 30,
-    color: "green",
     marginBottom: 10,
   },
-  subHeader: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: "blue",
+  timeContainer: {
+    display: "flex",
+    alignItems: "center",
+    width: 160,
   },
   timeText: {
     fontSize: 48,
+    fontWeight: "bold",
+  },
+  timeSubHeader: {
+    fontSize: 18,
+    marginBottom: 10,
+    textAlign: "center",
   },
   buttonContainer: {
     flexDirection: "row",
     marginTop: 20,
+    justifyContent: "space-between",
+    gap: 25,
+    marginBottom: 15,
   },
   button: {
     paddingVertical: 10,
