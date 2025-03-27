@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 import useColors from "../theme/useColors";
 import IonIcon from "react-native-vector-icons/Ionicons";
-// import error from "../../assets/icons/error-icon.svg";
 
 interface ChipProps {
   label: string;

@@ -1,25 +1,16 @@
-import {
-  View,
-  Text,
-  Button,
-  Appearance,
-  SafeAreaView,
-  ScrollView,
-} from "react-native";
+import { View, SafeAreaView, ScrollView, Text } from "react-native";
 import { useBLE } from "../bluetooth/BLEProvider";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import TimerCard from "../screen-cards/TimerCard";
 import { configurePushNotifications } from "../notifications/usePushNotifications";
-import { schedulePushNotification } from "../notifications/scheduleNotifications";
 import { useAppSettings } from "../app-settings/AppSettingProvider";
-import { useFocusEffect } from "@react-navigation/native";
 import AngleDisplayCard from "../screen-cards/AngleDisplay";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import CircularProgress from "../components/CircularProgress";
 import useColors from "../theme/useColors";
 import { StyleSheet } from "react-native";
-import WheelchairAngleDiagram from "../components/angle-display/WheelchairAngleDiagram";
-import Chip from "../components/Chip";
+import RingsCard from "../screen-cards/RingsCard";
+import PageHeader from "../components/PageHeader";
+import StatusSummary from "../components/StatusSummary";
 
 const HomeScreen = () => {
   // const {
@@ -76,17 +67,16 @@ const HomeScreen = () => {
 
   const colors = useColors();
 
-  const [leg, setAdjustedLegAngle] = useState(-90);
-  const [seat, setAdjustedSeatAngle] = useState(10);
-  const [back, setAdjustedBackAngle] = useState(60);
-
   return (
     <SafeAreaProvider>
       <SafeAreaView>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View style={styles.homeContainer}>
-            <TimerCard></TimerCard>
-            <AngleDisplayCard></AngleDisplayCard>
+            <PageHeader headerText="Pressure Relief Tracking" />
+            <StatusSummary />
+            <TimerCard />
+            <AngleDisplayCard />
+            <RingsCard />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -102,6 +92,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 20,
+    paddingBottom: 20,
   },
 });
 

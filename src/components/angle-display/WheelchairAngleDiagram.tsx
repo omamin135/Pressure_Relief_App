@@ -14,12 +14,14 @@ interface WheelchairAngleDiagramProps {
   angles: anglesType;
   displayAngles: displayAnglesType;
   sensorStatuses: sensorStatusType;
+  tiltThreshold: number;
 }
 
 const WheelchairAngleDiagram = ({
   angles,
   displayAngles,
   sensorStatuses,
+  tiltThreshold,
 }: WheelchairAngleDiagramProps) => {
   const colors = useColors();
 
@@ -29,6 +31,9 @@ const WheelchairAngleDiagram = ({
   const [adjustedLegAngle, setAdjustedLegAngle] = useState(angles.legAngle);
   const [adjustedSeatAngle, setAdjustedSeatAngle] = useState(-angles.seatAngle);
   const [adjustedBackAngle, setAdjustedBackAngle] = useState(angles.backAngle);
+  const [adjustedTilitThreshold, setAdjustedTilitThreshold] = useState(
+    -tiltThreshold
+  );
 
   // adjust the angles to be in correct form for the diagram
   useEffect(() => {
@@ -36,6 +41,10 @@ const WheelchairAngleDiagram = ({
     setAdjustedSeatAngle(-angles.seatAngle);
     setAdjustedBackAngle(angles.backAngle);
   }, [angles]);
+
+  useEffect(() => {
+    setAdjustedTilitThreshold(-tiltThreshold);
+  }, [tiltThreshold]);
 
   // Segment lengths
   const segmentLength = 100;
@@ -55,6 +64,7 @@ const WheelchairAngleDiagram = ({
   const radiansSeat = (adjustedSeatAngle * Math.PI) / 180;
   const radiansBack = (adjustedBackAngle * Math.PI) / 180;
   const radiansLeg = (adjustedLegAngle * Math.PI) / 180;
+  const radiansTiltThesold = (adjustedTilitThreshold * Math.PI) / 180;
 
   // Calculate the seat line endpoints
   const seatX1 = centerX - (seatSegmentLength / 2) * Math.cos(radiansSeat);
@@ -68,6 +78,32 @@ const WheelchairAngleDiagram = ({
 
   const legX2 = seatX2 + legSegmentLength * Math.cos(radiansLeg);
   const legY2 = seatY2 - legSegmentLength * Math.sin(radiansLeg);
+
+  // Calculate the tilt thesold line endpoints
+  const seatThresholdX1 =
+    centerX - (seatSegmentLength / 2) * Math.cos(radiansTiltThesold);
+  const seatThresholdY1 =
+    centerY - (seatSegmentLength / 2) * Math.sin(radiansTiltThesold);
+  const seatThresholdX2 =
+    centerX + (seatSegmentLength / 2) * Math.cos(radiansTiltThesold);
+  const seatThresholdY2 =
+    centerY + (seatSegmentLength / 2) * Math.sin(radiansTiltThesold);
+
+  const backThresholdX1 =
+    seatThresholdX1 -
+    backSegmentLength *
+      Math.cos(((adjustedTilitThreshold + 80) * Math.PI) / 180);
+  const backThresholdY1 =
+    seatThresholdY1 -
+    backSegmentLength *
+      Math.sin(((adjustedTilitThreshold + 80) * Math.PI) / 180);
+
+  const radiansLegThreshold =
+    ((180 - adjustedTilitThreshold + 90) * Math.PI) / 180;
+  const legThresholdX2 =
+    seatThresholdX2 + legSegmentLength * Math.cos(radiansLegThreshold);
+  const legThresholdY2 =
+    seatThresholdY2 - legSegmentLength * Math.sin(radiansLegThreshold);
 
   //#####################################################
   // Back and Seat Segment Angle Arc
@@ -92,7 +128,7 @@ const WheelchairAngleDiagram = ({
 
   const backSeatArcPath = `M ${backSeatArcStartX} ${backSeatArcStartY} A ${backSeatArcRadius} ${backSeatArcRadius} 0 ${backSeatLargeArcFlag} 1 ${backSeatArcEndX} ${backSeatArcEndY}`;
 
-  const backSeatAngleDistance = 50;
+  const backSeatAngleDistance = 45;
   const backSeatTextX =
     seatX1 -
     20 +
@@ -123,12 +159,12 @@ const WheelchairAngleDiagram = ({
   const legSeatArcStartY = seatY2 - legSeatArcRadius * Math.sin(radiansLeg);
   const legSeatArcEndX = seatX2 - legSeatArcRadius * Math.cos(-radiansSeat);
   const legSeatArcEndY = seatY2 + legSeatArcRadius * Math.sin(-radiansSeat);
-  const legSeatLargeArcFlag = legSeatAngleBetween > 180 ? 1 : 0;
+  const legSeatLargeArcFlag = legSeatAngleBetween > 270 ? 1 : 0;
 
   const legSeatArcPath = `M ${legSeatArcStartX} ${legSeatArcStartY} A ${legSeatArcRadius} ${legSeatArcRadius} 0 ${legSeatLargeArcFlag} 1 ${legSeatArcEndX} ${legSeatArcEndY}`;
 
   // Position angle text near the arc
-  const legSeatAngleDistance = 55;
+  const legSeatAngleDistance = 50;
   const legSeatTextX =
     seatX2 -
     10 -
@@ -159,13 +195,74 @@ const WheelchairAngleDiagram = ({
     seatY1 - seatArcRadius * Math.sin(-radiansSeat) + segmentWidth / 2;
   const seatArcEndX = seatX1 + seatArcRadius;
   const seatArcEndY = seatY1 + segmentWidth / 2;
-  const seatLargeArcFlag = legSeatAngleBetween > 180 ? 1 : 0;
+  const seatLargeArcFlag = legSeatAngleBetween > 270 ? 1 : 0;
 
   const seatArcPath = `M ${seatArcStartX} ${seatArcStartY} A ${seatArcRadius} ${seatArcRadius} 0 ${seatLargeArcFlag} 1 ${seatArcEndX} ${seatArcEndY}`;
 
   return (
-    <View style={styles.container}>
-      <Svg height="300" width="300">
+    <View
+      style={{
+        ...styles.container,
+        backgroundColor: colors.background.secondary,
+      }}
+    >
+      <Svg height="270" width="300">
+        {/* Tilt Theshold Back Segment */}
+        <Line
+          x1={backThresholdX1}
+          y1={backThresholdY1}
+          x2={seatThresholdX1}
+          y2={seatThresholdY1}
+          stroke={colors.icons}
+          strokeWidth={segmentWidth}
+          strokeLinecap="round"
+        />
+
+        {/* Tilt Theshold Seat Segment */}
+        <Line
+          x1={seatThresholdX1}
+          y1={seatThresholdY1}
+          x2={seatThresholdX2}
+          y2={seatThresholdY2}
+          stroke={colors.icons}
+          strokeWidth={segmentWidth}
+          strokeLinecap="round"
+        />
+
+        {/* Tilt Theshold Leg Segment */}
+        <Line
+          x1={seatThresholdX2}
+          y1={seatThresholdY2}
+          x2={legThresholdX2}
+          y2={legThresholdY2}
+          stroke={colors.icons}
+          strokeWidth={segmentWidth}
+          strokeLinecap="round"
+        />
+
+        {/* foot */}
+        <Line
+          x1={legThresholdX2}
+          y1={legThresholdY2}
+          x2={legThresholdX2 + 15 * Math.cos(radiansLegThreshold + Math.PI / 2)}
+          y2={legThresholdY2 - 15 * Math.sin(radiansLegThreshold + Math.PI / 2)}
+          stroke={colors.icons}
+          strokeWidth={segmentWidth}
+          strokeLinecap="round"
+        />
+
+        {/* head */}
+        <Circle
+          cx={backThresholdX1}
+          cy={backThresholdY1}
+          r={20}
+          fill={colors.icons}
+        />
+
+        <SvgText x={90} y={30} fill="black" fontSize="14" fontWeight="bold">
+          Pressure Relief Threshold: {tiltThreshold}°
+        </SvgText>
+
         {/* back to seat angle indicator */}
         <Path d={backSeatArcPath} stroke="black" strokeWidth="3" fill="none" />
         <SvgText
@@ -272,6 +369,7 @@ const WheelchairAngleDiagram = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    borderRadius: 20,
   },
 });
 

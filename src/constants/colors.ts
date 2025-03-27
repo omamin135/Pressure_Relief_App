@@ -45,7 +45,7 @@ export const colors = {
       secondary: "rgb(240, 240, 240)",
     },
     border: "rgb(213, 215, 218)",
-    icons: "rgb(164, 167, 174)",
+    icons: "rgb(185, 186, 187)",
   },
   dark: {
     primary,
@@ -62,6 +62,6 @@ export const colors = {
       secondary: "rgb(240, 240, 240)",
     },
     border: "rgb(213, 215, 218)",
-    icons: "rgb(164, 167, 174)",
+    icons: "rgb(185, 186, 187)",
   },
 };

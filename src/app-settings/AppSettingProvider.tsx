@@ -5,6 +5,9 @@ interface AppSettingsType {
   notificationsEnabled: boolean;
   reliefDurationSeconds: number;
   reliefIntervalMin: number;
+  onTimeToleranceSec: number;
+  goalNumberDailyRoutines: number;
+  tiltThreshold: number;
 }
 
 interface AppSettingsContextType {
@@ -20,6 +23,9 @@ const defaultAppSettings: AppSettingsType = {
   notificationsEnabled: true,
   reliefDurationSeconds: 120,
   reliefIntervalMin: 20,
+  onTimeToleranceSec: 120,
+  goalNumberDailyRoutines: 25,
+  tiltThreshold: 45,
 };
 
 const AppSettingsContext = createContext<AppSettingsContextType>({

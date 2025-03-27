@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useContext,
   useMemo,
+  useRef,
 } from "react";
 import { PermissionsAndroid, Platform } from "react-native";
 import {
@@ -15,6 +16,7 @@ import {
 } from "react-native-ble-plx";
 import * as ExpoDevice from "expo-device";
 import {
+  Angle_DB_STORE_PERIOD,
   ANGLE_INDEX,
   ANGLE_UUID,
   BACK_DEFAULT_ANGLE,
@@ -28,6 +30,7 @@ import {
 } from "../constants/bleConstants";
 import { Buffer } from "buffer";
 import { anglesType, displayAnglesType, sensorStatusType } from "./dataTypes";
+import { useDatabase } from "../dataBase/DataBaseProvider";
 
 // interface anglesType {
 //   backAngle: number;
@@ -49,6 +52,8 @@ import { anglesType, displayAnglesType, sensorStatusType } from "./dataTypes";
 
 interface BLEContextType {
   connectedDevice: Device | undefined | null;
+  device: Device | null;
+  isScanning: boolean;
   sensorData: number[] | null;
   angles: anglesType;
   displayAngles: displayAnglesType;
@@ -64,6 +69,8 @@ interface BLEProviderProps {
 
 const BLEContext = createContext<BLEContextType>({
   connectedDevice: null,
+  device: null,
+  isScanning: false,
   sensorData: null,
   connected: false,
   angles: {
@@ -86,8 +93,10 @@ const BLEContext = createContext<BLEContextType>({
 
 export const BLEProvider = ({ children }: BLEProviderProps) => {
   const bleManager = useMemo(() => new BleManager(), []);
+  const { storeAngleData } = useDatabase();
 
   const [device, setDevice] = useState<Device | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
   const [sensorData, setSensorData] = useState<number[]>([0, 0, 0, 0, 0, 0]);
   const [angles, setAngles] = useState<anglesType>({
     backAngle: BACK_DEFAULT_ANGLE,
@@ -108,6 +117,8 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
   const [connected, setConnected] = useState<boolean>(false);
   const [retryIntervalId, setRetryIntervalId] = useState<NodeJS.Timeout>();
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout>();
+
+  const dbStoreCount = useRef(0);
 
   useEffect(() => {
     connectToDevice();
@@ -147,19 +158,27 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
   useEffect(() => {
     setAngles({
       backAngle: sensorStatuses.backSensor
-        ? sensorData[BACK_SENSOR_NUMBER + ANGLE_INDEX]
+        ? sensorData[2 * BACK_SENSOR_NUMBER + ANGLE_INDEX]
         : angles.backAngle,
       seatAngle: sensorStatuses.seatSensor
-        ? sensorData[SEAT_SENSOR_NUMBER + ANGLE_INDEX]
+        ? sensorData[2 * SEAT_SENSOR_NUMBER + ANGLE_INDEX]
         : angles.seatAngle,
       legAngle: sensorStatuses.legSensor
-        ? sensorData[LEG_SENSOR_NUMBER + ANGLE_INDEX]
+        ? sensorData[2 * LEG_SENSOR_NUMBER + ANGLE_INDEX]
         : angles.legAngle,
     });
   }, [sensorData]);
 
   useEffect(() => {
     computeDisplayAngles();
+
+    // every Angle_DB_STORE_PERIOD angle reads store in database
+    if (dbStoreCount.current > Angle_DB_STORE_PERIOD) {
+      storeAngleData(angles.backAngle, angles.seatAngle, angles.legAngle);
+      dbStoreCount.current = 0;
+      return;
+    }
+    dbStoreCount.current++;
   }, [angles]);
 
   const connectToDevice = async () => {
@@ -234,18 +253,20 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
   // Searches for devices with deviceName as it name
   // sets device state to the found device
   const scanForDevice = (deviceName: string) => {
+    setIsScanning(true);
+
     bleManager.stopDeviceScan();
     bleManager.startDeviceScan(null, null, (error, device) => {
       if (error) {
         console.log("Scan error " + error);
-        bleManager.stopDeviceScan();
-        //Handle error *******************************************************************************
+        // bleManager.stopDeviceScan();
       }
       if (device && device.name?.includes(deviceName)) {
         console.log(device.name);
         setDevice(device);
         bleManager.stopDeviceScan();
 
+        setIsScanning(false);
         //connect to found device
         connect(device);
       }
@@ -373,7 +394,7 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
       bytes.push(parseInt(hexString.slice(i, i + 2), 16));
     }
 
-    const floats = [0, 0, 0, 0, 0, 0];
+    const floats = [];
 
     for (let i = 0; i < bytes.length; i += 4) {
       floats.push(bytes2Float(bytes.slice(i, i + 4)));
@@ -403,6 +424,7 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
   // [seatAngle] the angle of the seat up from the horizontal
   // [legSeatAngle] the angle from the leg rest to the bottom of the seat
   const computeDisplayAngles = () => {
+    console.log("seatangle " + angles.seatAngle);
     setDisplayAngles({
       backSeatAngle: 180 - angles.backAngle - angles.seatAngle,
       seatAngle: angles.seatAngle,
@@ -414,6 +436,8 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
     <BLEContext.Provider
       value={{
         connectedDevice,
+        device,
+        isScanning,
         sensorData,
         connected,
         angles,

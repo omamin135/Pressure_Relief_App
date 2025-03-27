@@ -43,7 +43,7 @@ const AngleDisplayTable = ({
 
 const styles = StyleSheet.create({
   tableContainer: {
-    marginTop: -20,
+    // marginTop: -20,
     marginBottom: -10,
   },
   divider: {
