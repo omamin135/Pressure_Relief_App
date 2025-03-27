@@ -1,8 +1,8 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, StyleProp, ViewStyle } from "react-native";
 import useColors from "../theme/useColors";
 
 interface CardProps {
-  children?: JSX.Element;
+  children?: JSX.Element | JSX.Element[];
 }
 
 const Card = ({ children }: CardProps) => {

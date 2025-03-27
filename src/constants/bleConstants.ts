@@ -14,3 +14,5 @@ export const ANGLE_INDEX = 0;
 export const BACK_DEFAULT_ANGLE = 60;
 export const SEAT_DEFAULT_ANGLE = 0;
 export const LEG_DEFAULT_ANGLE = -90;
+
+export const Angle_DB_STORE_PERIOD = 60;

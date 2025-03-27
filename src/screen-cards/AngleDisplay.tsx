@@ -4,12 +4,15 @@ import WheelchairAngleDiagram from "../components/angle-display/WheelchairAngleD
 import { useEffect, useState } from "react";
 import AngleDisplayTable from "../components/angle-display/AngleDisplayTable";
 import Card from "../components/Card";
+import { useAppSettings } from "../app-settings/AppSettingProvider";
 
 // leg angle is the angle UP from horizontal (poitive angle mean leg rest is above horizontal)
 // seat angle is the angle UP from horizontal (poitive angle mean seat rest is angled backwards/sloping down to LEFT)
 // back angle is the angle UP from the orizontal (the angle up from the "outside of the wheelchair")
 const AngleDisplayCard = () => {
   const { angles, displayAngles, sensorStatuses } = useBLE();
+  const { appSettings } = useAppSettings();
+
   return (
     // <View>
     //   <View>
@@ -33,6 +36,7 @@ const AngleDisplayCard = () => {
           angles={angles}
           displayAngles={displayAngles}
           sensorStatuses={sensorStatuses}
+          tiltThreshold={appSettings.tiltThreshold}
         ></WheelchairAngleDiagram>
         <AngleDisplayTable
           displayAngles={displayAngles}

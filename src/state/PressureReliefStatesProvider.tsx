@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useBLE } from "../bluetooth/BLEProvider";
 import { useAppSettings } from "../app-settings/AppSettingProvider";
+import { useDatabase } from "../dataBase/DataBaseProvider";
 
 interface PressureReliefStatesContextType {
   pressureReliefMode: boolean;
@@ -43,6 +44,7 @@ export const PressureReliefStatesProvider = ({
 
   const { sensorData } = useBLE();
   const { appSettings } = useAppSettings();
+  const { storeStateChangeData } = useDatabase();
 
   const [pressureReliefMode, setPressureReliefMode] = useState<boolean>(false);
   const [previousState, setPreviousState] = useState<boolean>();
@@ -83,12 +85,17 @@ export const PressureReliefStatesProvider = ({
     if (!stateLock && !pressureReliefMode) {
       setPressureReliefState(checkForPressureRelief());
     }
+
+    if (pressureReliefMode && checkIfExitPressureRelief()) {
+      setStateLock(false);
+      setPressureReliefMode(false);
+    }
   }, [dataBuffer]);
 
   // if the lock gets cleared manually, then make sure to clear the timeout
   useEffect(() => {
     console.log(stateLock);
-    if (!stateLock) clearTimeout(timeoutId);
+    // if (!stateLock) clearTimeout(timeoutId); #################
   }, [stateLock]);
 
   useEffect(() => {
@@ -96,14 +103,17 @@ export const PressureReliefStatesProvider = ({
       // lock the state so when done with pressure releif and wheelchair is
       // still tilted is does not immeditely go back into pressure relief routine mode
       setStateLock(true);
+      // ##################################################
+      // clearTimeout(timeoutId);
+      // const id = setTimeout(() => {
+      //   setStateLock(false);
+      // }, (appSettings.reliefDurationSeconds + TIMEOUT_SEC) * 1000);
 
-      clearTimeout(timeoutId);
-      const id = setTimeout(() => {
-        setStateLock(false);
-      }, (appSettings.reliefDurationSeconds + TIMEOUT_SEC) * 1000);
-
-      setTimeoutId(id);
+      // setTimeoutId(id);
     }
+
+    //when change in pressure releif state, log into database
+    storeStateChangeData(pressureReliefMode);
   }, [pressureReliefMode]);
 
   const checkForPressureRelief = (): boolean => {
@@ -140,6 +150,7 @@ export const PressureReliefStatesProvider = ({
 
   const setPressureReliefState = (value: boolean) => {
     const prevState = pressureReliefMode;
+    setStateLock(false);
     setPreviousState(prevState);
     setPressureReliefMode(value);
   };

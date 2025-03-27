@@ -1,0 +1,4 @@
+1. add ability to change roll and pitch in setting
+2. Figure out positive and negative from mounting
+3. Bug fix the rings where on time sometime reports more pressure reliefs than total
+4. test if auto detection works

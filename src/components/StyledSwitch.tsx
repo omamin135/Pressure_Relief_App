@@ -4,8 +4,9 @@ import useColors from "../theme/useColors";
 
 interface StyledSwitchProps {
   value: boolean;
-  label: string;
+  label?: string;
   color: string;
+  accessibilityLabel?: string;
   assessabilityHint?: string;
   onToggle: (value: boolean) => Promise<void> | void;
 }
@@ -21,6 +22,7 @@ const StyledSwitch = ({
   value,
   label,
   color,
+  accessibilityLabel,
   assessabilityHint,
   onToggle,
 }: StyledSwitchProps) => {
@@ -35,7 +37,7 @@ const StyledSwitch = ({
         onValueChange={onToggle}
         value={value}
         accessibilityRole="switch" // declares this component as a switch for readers
-        accessibilityLabel={label} //what the screen reader will read
+        accessibilityLabel={accessibilityLabel} //what the screen reader will read
         accessibilityHint={assessabilityHint} // additional info for readers to identify what this does
         accessibilityState={{ disabled: false, checked: value }}
       />

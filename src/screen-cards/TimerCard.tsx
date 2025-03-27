@@ -8,6 +8,7 @@ import { usePressureReliefStates } from "../state/PressureReliefStatesProvider";
 import CircularProgress from "../components/CircularProgress";
 import StyledButton from "../components/StyledButton";
 import StyledSwitch from "../components/StyledSwitch";
+import { useDatabase } from "../dataBase/DataBaseProvider";
 
 const TimerCard = () => {
   const colors = useColors();
@@ -15,6 +16,7 @@ const TimerCard = () => {
   const { pressureReliefMode, setPressureReliefState, setStateLock } =
     usePressureReliefStates();
   const [radialTimePercentage, setRadialTimePercentage] = useState(0);
+  const { storePressureReliefTime } = useDatabase();
 
   const [time, setTime] = useState(0);
   // const [pressureReliefState, setPressureReliefState] =
@@ -44,6 +46,7 @@ const TimerCard = () => {
           body: "Reminder to perform your pressure relief routine",
         });
       }
+      storePressureReliefTime();
     } else if (
       pressureReliefMode &&
       appSettings.reliefDurationSeconds - time === 0
@@ -181,7 +184,12 @@ const TimerCard = () => {
             )}
           </View>
         </CircularProgress>
-        <View>
+        <View
+          style={{
+            ...styles.inputContainer,
+            backgroundColor: colors.background.secondary,
+          }}
+        >
           <View style={styles.buttonContainer}>
             <StyledButton
               title={pressureReliefMode ? "Stop Routine" : "Start Routine"}
@@ -206,6 +214,7 @@ const TimerCard = () => {
             value={paused}
             label="Pause Tracking"
             color={colors.primary.main}
+            accessibilityLabel="Pause Tracking"
             assessabilityHint="Pauses the tracking state"
             onToggle={(paused) => {
               togglePausedState();
@@ -247,9 +256,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
+  inputContainer: {
+    marginTop: 15,
+    padding: 20,
+    borderRadius: 20,
+  },
   buttonContainer: {
     flexDirection: "row",
-    marginTop: 20,
     justifyContent: "space-between",
     gap: 25,
     marginBottom: 15,
