@@ -6,11 +6,13 @@ import useColors from "../../theme/useColors";
 interface AngleDisplayTableProps {
   displayAngles: displayAnglesType;
   sensorStatuses: sensorStatusType;
+  deviceConnected: boolean;
 }
 
 const AngleDisplayTable = ({
   displayAngles,
   sensorStatuses,
+  deviceConnected,
 }: AngleDisplayTableProps) => {
   const colors = useColors();
 
@@ -19,7 +21,7 @@ const AngleDisplayTable = ({
       <AngleDisplayRow
         label="Back Rest"
         angle={displayAngles.backSeatAngle}
-        connected={sensorStatuses.backSensor}
+        connected={sensorStatuses.backSensor && deviceConnected}
       ></AngleDisplayRow>
       <View
         style={{ ...styles.divider, borderColor: colors.text.primary }}
@@ -27,7 +29,7 @@ const AngleDisplayTable = ({
       <AngleDisplayRow
         label="Seat"
         angle={displayAngles.seatAngle}
-        connected={sensorStatuses.seatSensor}
+        connected={sensorStatuses.seatSensor && deviceConnected}
       ></AngleDisplayRow>
       <View
         style={{ ...styles.divider, borderColor: colors.text.primary }}
@@ -35,7 +37,7 @@ const AngleDisplayTable = ({
       <AngleDisplayRow
         label="Leg Rest"
         angle={displayAngles.legSeatAngle}
-        connected={sensorStatuses.legSensor}
+        connected={sensorStatuses.legSensor && deviceConnected}
       ></AngleDisplayRow>
     </View>
   );

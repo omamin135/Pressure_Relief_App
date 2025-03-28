@@ -9,10 +9,10 @@ export const BACK_SENSOR_NUMBER = 0;
 export const SEAT_SENSOR_NUMBER = 1;
 export const LEG_SENSOR_NUMBER = 2;
 
-export const ANGLE_INDEX = 0;
+export const ANGLE_INDEX = 1;
 
 export const BACK_DEFAULT_ANGLE = 60;
 export const SEAT_DEFAULT_ANGLE = 0;
 export const LEG_DEFAULT_ANGLE = -90;
 
-export const Angle_DB_STORE_PERIOD = 60;
+export const ANGLE_DB_STORE_PERIOD = 60;
