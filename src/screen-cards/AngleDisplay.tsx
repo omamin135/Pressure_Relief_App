@@ -10,7 +10,7 @@ import { useAppSettings } from "../app-settings/AppSettingProvider";
 // seat angle is the angle UP from horizontal (poitive angle mean seat rest is angled backwards/sloping down to LEFT)
 // back angle is the angle UP from the orizontal (the angle up from the "outside of the wheelchair")
 const AngleDisplayCard = () => {
-  const { angles, displayAngles, sensorStatuses } = useBLE();
+  const { angles, displayAngles, sensorStatuses, connected } = useBLE();
   const { appSettings } = useAppSettings();
 
   return (
@@ -41,6 +41,7 @@ const AngleDisplayCard = () => {
         <AngleDisplayTable
           displayAngles={displayAngles}
           sensorStatuses={sensorStatuses}
+          deviceConnected={connected}
         ></AngleDisplayTable>
       </View>
     </Card>

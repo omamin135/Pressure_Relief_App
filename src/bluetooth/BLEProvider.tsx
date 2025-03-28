@@ -16,7 +16,7 @@ import {
 } from "react-native-ble-plx";
 import * as ExpoDevice from "expo-device";
 import {
-  Angle_DB_STORE_PERIOD,
+  ANGLE_DB_STORE_PERIOD,
   ANGLE_INDEX,
   ANGLE_UUID,
   BACK_DEFAULT_ANGLE,
@@ -173,7 +173,7 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
     computeDisplayAngles();
 
     // every Angle_DB_STORE_PERIOD angle reads store in database
-    if (dbStoreCount.current > Angle_DB_STORE_PERIOD) {
+    if (dbStoreCount.current > ANGLE_DB_STORE_PERIOD) {
       storeAngleData(angles.backAngle, angles.seatAngle, angles.legAngle);
       dbStoreCount.current = 0;
       return;

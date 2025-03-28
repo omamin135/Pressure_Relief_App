@@ -75,7 +75,7 @@ const BluetoothScreen = () => {
                   </View>
                   <View style={styles.rightColumn}>
                     <StyledButton
-                      title={!connected ? "Disconnect" : "Connect"}
+                      title={connected ? "Disconnect" : "Connect"}
                       onPress={() =>
                         connected ? disconnectFromDevice() : connectToDevice()
                       }
