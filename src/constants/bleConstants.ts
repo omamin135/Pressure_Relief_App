@@ -9,10 +9,14 @@ export const BACK_SENSOR_NUMBER = 0;
 export const SEAT_SENSOR_NUMBER = 1;
 export const LEG_SENSOR_NUMBER = 2;
 
-export const ANGLE_INDEX = 1;
+export const NUM_IMU_AXES = 2;
 
-export const BACK_DEFAULT_ANGLE = 60;
+export const BACK_DEFAULT_ANGLE = 90;
 export const SEAT_DEFAULT_ANGLE = 0;
 export const LEG_DEFAULT_ANGLE = -90;
 
-export const ANGLE_DB_STORE_PERIOD = 60;
+export const BLE_READ_PERIOD_SEC = 1;
+
+export const BLE_RECONNECT_PERIOD_SEC = 10;
+
+export const ANGLE_DB_STORE_PERIOD_COUNT = 1;

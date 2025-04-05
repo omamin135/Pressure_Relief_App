@@ -92,11 +92,11 @@ const WheelchairAngleDiagram = ({
   const backThresholdX1 =
     seatThresholdX1 -
     backSegmentLength *
-      Math.cos(((adjustedTilitThreshold + 80) * Math.PI) / 180);
+      Math.cos(((adjustedTilitThreshold + 90) * Math.PI) / 180);
   const backThresholdY1 =
     seatThresholdY1 -
     backSegmentLength *
-      Math.sin(((adjustedTilitThreshold + 80) * Math.PI) / 180);
+      Math.sin(((adjustedTilitThreshold + 90) * Math.PI) / 180);
 
   const radiansLegThreshold =
     ((180 - adjustedTilitThreshold + 90) * Math.PI) / 180;
@@ -305,7 +305,7 @@ const WheelchairAngleDiagram = ({
           y1={backY1}
           x2={seatX1}
           y2={seatY1}
-          stroke={sensorStatuses.legSensor ? "black" : colors.error.primary}
+          stroke={sensorStatuses.backSensor ? "black" : colors.error.primary}
           strokeWidth={segmentWidth}
           strokeLinecap="round"
         />
@@ -316,7 +316,7 @@ const WheelchairAngleDiagram = ({
           y1={seatY1}
           x2={seatX2}
           y2={seatY2}
-          stroke={sensorStatuses.legSensor ? "black" : colors.error.primary}
+          stroke={sensorStatuses.seatSensor ? "black" : colors.error.primary}
           strokeWidth={segmentWidth}
           strokeLinecap="round"
         />

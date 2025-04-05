@@ -10,7 +10,7 @@ import useColors from "../theme/useColors";
 import { StyleSheet } from "react-native";
 import RingsCard from "../screen-cards/RingsCard";
 import PageHeader from "../components/PageHeader";
-import StatusSummary from "../components/StatusSummary";
+import StatusSummary from "../screen-cards/StatusSummary";
 
 const HomeScreen = () => {
   // const {

@@ -1,5 +1,0 @@
-1. add ability to change roll and pitch in setting (roll first pitch second)
-2. Figure out positive and negative from mounting
-3. Bug fix the rings where on time sometime reports more pressure reliefs than total
-    Could it be that the time table gets a value added when changing from routine to upright?
-4. test if auto detection works

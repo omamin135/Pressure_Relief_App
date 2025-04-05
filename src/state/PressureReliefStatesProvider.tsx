@@ -2,6 +2,11 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useBLE } from "../bluetooth/BLEProvider";
 import { useAppSettings } from "../app-settings/AppSettingProvider";
 import { useDatabase } from "../dataBase/DataBaseProvider";
+import {
+  BACK_DEFAULT_ANGLE,
+  LEG_DEFAULT_ANGLE,
+  SEAT_DEFAULT_ANGLE,
+} from "../constants/bleConstants";
 
 interface PressureReliefStatesContextType {
   pressureReliefMode: boolean;
@@ -14,9 +19,9 @@ interface PressureReliefStatesProviderProps {
 }
 
 interface DataBufferType {
-  sensor1: number[];
-  sensor2: number[];
-  sensor3: number[];
+  backAngle: number[];
+  seatAngle: number[];
+  legAngle: number[];
 }
 
 const MAX_BUFFER_SIZE = 5;
@@ -37,12 +42,12 @@ export const PressureReliefStatesProvider = ({
   children,
 }: PressureReliefStatesProviderProps) => {
   const [dataBuffer, setDataBuffer] = useState<DataBufferType>({
-    sensor1: [] as number[],
-    sensor2: [] as number[],
-    sensor3: [] as number[],
+    backAngle: [] as number[],
+    seatAngle: [] as number[],
+    legAngle: [] as number[],
   });
 
-  const { sensorData } = useBLE();
+  const { sensorData, angles } = useBLE();
   const { appSettings } = useAppSettings();
   const { storeStateChangeData } = useDatabase();
 
@@ -62,55 +67,80 @@ export const PressureReliefStatesProvider = ({
   };
 
   useEffect(() => {
-    if (sensorData)
+    if (angles)
       setDataBuffer((prevBuffer) => {
         const updatedBuffer = {
-          sensor1: [...prevBuffer?.sensor1, sensorData[sensor1Index]].slice(
+          backAngle: [...prevBuffer?.backAngle, angles.backAngle].slice(
             -MAX_BUFFER_SIZE
           ),
-          sensor2: [...prevBuffer?.sensor1, sensorData[sensor2Index]].slice(
+          seatAngle: [...prevBuffer?.seatAngle, angles.seatAngle].slice(
             -MAX_BUFFER_SIZE
           ),
-          sensor3: [...prevBuffer?.sensor1, sensorData[sensor3Index]].slice(
+          legAngle: [...prevBuffer?.legAngle, angles.legAngle].slice(
             -MAX_BUFFER_SIZE
           ),
         };
         return updatedBuffer;
       });
-  }, [sensorData]);
+  }, [angles]);
 
   useEffect(() => {
-    console.log(stateLock);
+    //console.log(stateLock);
+    console.log("Buffer: ");
     console.log(dataBuffer);
-    if (!stateLock && !pressureReliefMode) {
-      setPressureReliefState(checkForPressureRelief());
+
+    if (stateLock) return;
+    if (!appSettings.sensorControlledState) return;
+
+    if (checkForPressureRelief()) {
+      setPressureReliefState(true);
+    } else if (checkIfExitPressureRelief()) {
+      setPressureReliefState(false);
     }
 
-    if (pressureReliefMode && checkIfExitPressureRelief()) {
-      setStateLock(false);
-      setPressureReliefMode(false);
-    }
+    // if (!stateLock) {
+    //   setPressureReliefState(checkForPressureRelief());
+    // }
+
+    // if (!pressureReliefMode) {
+    //   setPressureReliefState(checkForPressureRelief());
+    //   //setStateLock(true);
+    // } else {
+    //   //setPressureReliefState(checkIfExitPressureRelief());
+    // }
+
+    // console.log(checkForPressureRelief());
+    // console.log(checkIfExitPressureRelief());
+
+    // if (!stateLock && !pressureReliefMode) {
+    //   setPressureReliefState(checkForPressureRelief());
+    // }
+
+    // if (pressureReliefMode && checkIfExitPressureRelief()) {
+    //   setStateLock(false);
+    //   setPressureReliefMode(false);
+    // }
   }, [dataBuffer]);
 
   // if the lock gets cleared manually, then make sure to clear the timeout
-  useEffect(() => {
-    console.log(stateLock);
-    // if (!stateLock) clearTimeout(timeoutId); #################
-  }, [stateLock]);
+  // useEffect(() => {
+  //   console.log(stateLock);
+  //   // if (!stateLock) clearTimeout(timeoutId); #################
+  // }, [stateLock]);
 
   useEffect(() => {
-    if (previousState && !pressureReliefMode) {
-      // lock the state so when done with pressure releif and wheelchair is
-      // still tilted is does not immeditely go back into pressure relief routine mode
-      setStateLock(true);
-      // ##################################################
-      // clearTimeout(timeoutId);
-      // const id = setTimeout(() => {
-      //   setStateLock(false);
-      // }, (appSettings.reliefDurationSeconds + TIMEOUT_SEC) * 1000);
+    // if (previousState && !pressureReliefMode) {
+    //   // lock the state so when done with pressure releif and wheelchair is
+    //   // still tilted is does not immeditely go back into pressure relief routine mode
+    //   setStateLock(true);
+    //   // ##################################################
+    //   // clearTimeout(timeoutId);
+    //   // const id = setTimeout(() => {
+    //   //   setStateLock(false);
+    //   // }, (appSettings.reliefDurationSeconds + TIMEOUT_SEC) * 1000);
 
-      // setTimeoutId(id);
-    }
+    //   // setTimeoutId(id);
+    // }
 
     //when change in pressure releif state, log into database
     storeStateChangeData(pressureReliefMode);
@@ -118,39 +148,55 @@ export const PressureReliefStatesProvider = ({
 
   const checkForPressureRelief = (): boolean => {
     const bufferFilled = Object.values(dataBuffer).every(
-      (sensorData) => sensorData.length === 5
+      (sensorData) => sensorData.length === MAX_BUFFER_SIZE
     );
 
     // Do nothing if buffer is not filled
     if (!bufferFilled) return false;
 
-    // check if all the values in the sensor buffers are above the set threshold
-    return Object.entries(dataBuffer).every(([sensor, values]) =>
-      values.every(
-        (value: number) => value > thresholds[sensor as keyof typeof thresholds]
-      )
+    const { backAngle, seatAngle, legAngle } = dataBuffer;
+
+    // check if all the values in the buffer are above the set threshold
+    const backCheck = backAngle.every(
+      (angle) => angle <= BACK_DEFAULT_ANGLE - appSettings.tiltThreshold
     );
+    const seatCheck = seatAngle.every(
+      (angle) => angle >= SEAT_DEFAULT_ANGLE + appSettings.tiltThreshold
+    );
+    const legCheck = legAngle.every(
+      (angle) => angle >= LEG_DEFAULT_ANGLE + appSettings.tiltThreshold
+    );
+
+    return backCheck && seatCheck && legCheck;
   };
 
   const checkIfExitPressureRelief = (): boolean => {
     const bufferFilled = Object.values(dataBuffer).every(
-      (sensorData) => sensorData.length === 5
+      (sensorData) => sensorData.length === MAX_BUFFER_SIZE
     );
 
     // Do nothing if buffer is not filled
     if (!bufferFilled) return false;
 
-    // check if all the values in the sensor buffers are above the set threshold
-    return Object.entries(dataBuffer).every(([sensor, values]) =>
-      values.every(
-        (value: number) => value < thresholds[sensor as keyof typeof thresholds]
-      )
+    const { backAngle, seatAngle, legAngle } = dataBuffer;
+
+    // check if all the values in the buffer are above the set threshold
+    const backCheck = backAngle.every(
+      (angle) => angle > BACK_DEFAULT_ANGLE - appSettings.tiltThreshold
     );
+    const seatCheck = seatAngle.every(
+      (angle) => angle < SEAT_DEFAULT_ANGLE + appSettings.tiltThreshold
+    );
+    const legCheck = legAngle.every(
+      (angle) => angle < LEG_DEFAULT_ANGLE + appSettings.tiltThreshold
+    );
+
+    return backCheck && seatCheck && legCheck;
   };
 
   const setPressureReliefState = (value: boolean) => {
     const prevState = pressureReliefMode;
-    setStateLock(false);
+    //setStateLock(false);
     setPreviousState(prevState);
     setPressureReliefMode(value);
   };
