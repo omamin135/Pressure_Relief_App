@@ -8,6 +8,13 @@ interface AppSettingsType {
   onTimeToleranceSec: number;
   goalNumberDailyRoutines: number;
   tiltThreshold: number;
+  sensorControlledState: boolean;
+  backIndex: number;
+  seatIndex: number;
+  legIndex: number;
+  invertBack: boolean;
+  invertSeat: boolean;
+  invertLeg: boolean;
 }
 
 interface AppSettingsContextType {
@@ -26,6 +33,13 @@ const defaultAppSettings: AppSettingsType = {
   onTimeToleranceSec: 120,
   goalNumberDailyRoutines: 25,
   tiltThreshold: 45,
+  sensorControlledState: true,
+  backIndex: 0,
+  seatIndex: 0,
+  legIndex: 0,
+  invertBack: false,
+  invertSeat: false,
+  invertLeg: false,
 };
 
 const AppSettingsContext = createContext<AppSettingsContextType>({

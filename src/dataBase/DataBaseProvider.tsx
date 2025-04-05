@@ -15,6 +15,8 @@ interface DatabaseContextType {
   ) => void;
   storeStateChangeData: (isPressureReliefState: boolean) => void;
   storePressureReliefTime: () => void;
+  getAngles: () => void;
+  deleteAngles: () => void;
   dbStateTableStoreSignal: number;
   dataBase: SQLite.SQLiteDatabase;
 }
@@ -40,6 +42,12 @@ const DatabaseContext = createContext<DatabaseContextType>({
   storePressureReliefTime: (): void => {
     throw new Error("Function not implemented.");
   },
+  getAngles: (): void => {
+    throw new Error("Function not implemented.");
+  },
+  deleteAngles: (): void => {
+    throw new Error("Function not implemented.");
+  },
   dbStateTableStoreSignal: 0,
   dataBase: db,
 });
@@ -60,9 +68,11 @@ export const DatabaseProvider = ({ children }: DatabaseProviderProps) => {
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS AngleData (
           Id INTEGER PRIMARY KEY AUTOINCREMENT, 
-          BackAngle INTEGER, 
+          BackSeatAngle INTEGER, 
           SeatAngle INTEGER, 
-          LegAngle INTEGER, 
+          LegSeatAngle INTEGER,
+          LegAngle INTEGER,
+          BackAngle INTEGER,
           Timestamp TEXT
         )`,
         [],
@@ -251,12 +261,82 @@ export const DatabaseProvider = ({ children }: DatabaseProviderProps) => {
   //     });
   //   };
 
+  const getAngles = () => {
+    db.transaction((tx) => {
+      tx.executeSql("SELECT * FROM AngleData;", [], (tx, results) => {
+        const rows = results.rows;
+        const csvData = [];
+        csvData.push("Id,SeatAngle,LegAngle,BackAngle,Timestamp");
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows.item(i);
+          console.log(row);
+          csvData.push(
+            `${row.Id},${row.SeatAngle},${row.LegAngle},${row.BackAngle},${row.Timestamp}`
+          );
+        }
+
+        console.log(csvData);
+      });
+    });
+
+    db.transaction((tx) => {
+      tx.executeSql("SELECT * FROM StateChange;", [], (tx, results) => {
+        const rows = results.rows;
+        const csvData = [];
+        csvData.push("Id,IsPressureReliefState,Timestamp");
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows.item(i);
+          console.log(row);
+          csvData.push(
+            `${row.Id},${row.IsPressureReliefState},${row.Timestamp}`
+          );
+        }
+        console.log(csvData);
+      });
+    });
+  };
+
+  const deleteAngles = () => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        "DROP TABLE IF EXISTS AngleData;",
+        [],
+        (_, result) => {
+          console.log("Table dropped successfully.");
+          alert("Table dropped successfully.");
+        },
+        (error) => {
+          console.error("Error dropping table:", error);
+        }
+      );
+    });
+
+    db.transaction((tx) => {
+      tx.executeSql(
+        "DROP TABLE IF EXISTS StateChange;",
+        [],
+        (_, result) => {
+          console.log("Table dropped successfully.");
+          alert("Table dropped successfully.");
+        },
+        (error) => {
+          console.error("Error dropping table:", error);
+        }
+      );
+    });
+
+    setupAngleDataDatabase();
+    setupStateChangeDatabase();
+  };
+
   return (
     <DatabaseContext.Provider
       value={{
         storeAngleData,
         storeStateChangeData,
         storePressureReliefTime,
+        getAngles,
+        deleteAngles,
         dbStateTableStoreSignal,
         dataBase: db,
       }}

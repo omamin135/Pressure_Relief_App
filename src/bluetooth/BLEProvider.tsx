@@ -8,22 +8,19 @@ import React, {
   useRef,
 } from "react";
 import { PermissionsAndroid, Platform } from "react-native";
-import {
-  BleError,
-  BleManager,
-  Characteristic,
-  Device,
-} from "react-native-ble-plx";
+import { BleManager, Characteristic, Device } from "react-native-ble-plx";
 import * as ExpoDevice from "expo-device";
 import {
-  ANGLE_DB_STORE_PERIOD,
-  ANGLE_INDEX,
+  ANGLE_DB_STORE_PERIOD_COUNT,
   ANGLE_UUID,
   BACK_DEFAULT_ANGLE,
   BACK_SENSOR_NUMBER,
+  BLE_READ_PERIOD_SEC,
+  BLE_RECONNECT_PERIOD_SEC,
   DEVICE_NAME,
   LEG_DEFAULT_ANGLE,
   LEG_SENSOR_NUMBER,
+  NUM_IMU_AXES,
   SEAT_DEFAULT_ANGLE,
   SEAT_SENSOR_NUMBER,
   STATUS_UUID,
@@ -31,24 +28,8 @@ import {
 import { Buffer } from "buffer";
 import { anglesType, displayAnglesType, sensorStatusType } from "./dataTypes";
 import { useDatabase } from "../dataBase/DataBaseProvider";
-
-// interface anglesType {
-//   backAngle: number;
-//   seatAngle: number;
-//   legAngle: number;
-// }
-
-// interface displayAnglesType {
-//   backSeatAngle: number;
-//   seatAngle: number;
-//   legSeatAngle: number;
-// }
-
-// interface sensorStatusType {
-//   backSensor: boolean;
-//   seatSensor: boolean;
-//   legSensor: boolean;
-// }
+import { useAppSettings } from "../app-settings/AppSettingProvider";
+import { schedulePushNotification } from "../notifications/scheduleNotifications";
 
 interface BLEContextType {
   connectedDevice: Device | undefined | null;
@@ -88,12 +69,10 @@ const BLEContext = createContext<BLEContextType>({
   },
 });
 
-// return angles, and display angles.
-// check if display angles is set correctly on initial startup
-
 export const BLEProvider = ({ children }: BLEProviderProps) => {
   const bleManager = useMemo(() => new BleManager(), []);
   const { storeAngleData } = useDatabase();
+  const { appSettings } = useAppSettings();
 
   const [device, setDevice] = useState<Device | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -117,7 +96,9 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
   const [connected, setConnected] = useState<boolean>(false);
   const [retryIntervalId, setRetryIntervalId] = useState<NodeJS.Timeout>();
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout>();
+  const [notificationLock, setNotificationLock] = useState(false);
 
+  const lock = useRef(false);
   const dbStoreCount = useRef(0);
 
   useEffect(() => {
@@ -125,19 +106,15 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
   }, []);
 
   useEffect(() => {
-    console.log("display");
-    console.log(displayAngles);
-  }, [displayAngles]);
-
-  useEffect(() => {
     if (connectedDevice && connected) {
       // clear first to avoid having multiple intervals spun up
+
       clearInterval(intervalId);
       clearInterval(retryIntervalId);
       setIntervalId(
         setInterval(() => {
           readData(connectedDevice);
-        }, 1000)
+        }, BLE_READ_PERIOD_SEC * 1000)
       );
     } else {
       // if not connected to device, attempt to reconnect
@@ -146,9 +123,10 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
         setInterval(() => {
           //console.log("retry");
           connectToDevice();
-        }, 10000)
+        }, BLE_RECONNECT_PERIOD_SEC * 1000)
       );
     }
+
     return () => {
       clearInterval(intervalId);
       clearInterval(retryIntervalId);
@@ -156,16 +134,47 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
   }, [connectedDevice, connected]);
 
   useEffect(() => {
+    console.log("Connect");
+    if (!connected) {
+      if (appSettings.notificationsEnabled && !lock.current) {
+        //timeout notification so you dont get spammed when device rapidely connects and disconnects sometimes
+        lock.current = true;
+        setTimeout(() => {
+          lock.current = false;
+        }, 10000);
+
+        schedulePushNotification({
+          title: "Device Disconnected",
+          body: "Bluetooth connection lost",
+        });
+      }
+    }
+  }, [connected]);
+
+  useEffect(() => {
+    const backAngle =
+      sensorData[NUM_IMU_AXES * BACK_SENSOR_NUMBER + appSettings.backIndex];
+    const seatAngle =
+      sensorData[NUM_IMU_AXES * SEAT_SENSOR_NUMBER + appSettings.seatIndex];
+    const legAngle =
+      sensorData[NUM_IMU_AXES * LEG_SENSOR_NUMBER + appSettings.legIndex];
+
     setAngles({
-      backAngle: sensorStatuses.backSensor
-        ? sensorData[2 * BACK_SENSOR_NUMBER + ANGLE_INDEX]
-        : angles.backAngle,
-      seatAngle: sensorStatuses.seatSensor
-        ? sensorData[2 * SEAT_SENSOR_NUMBER + ANGLE_INDEX]
-        : angles.seatAngle,
-      legAngle: sensorStatuses.legSensor
-        ? sensorData[2 * LEG_SENSOR_NUMBER + ANGLE_INDEX]
-        : angles.legAngle,
+      backAngle: !sensorStatuses.backSensor
+        ? angles.backAngle
+        : appSettings.invertBack
+        ? -backAngle
+        : backAngle,
+      seatAngle: !sensorStatuses.seatSensor
+        ? angles.seatAngle
+        : appSettings.invertSeat
+        ? -seatAngle
+        : seatAngle,
+      legAngle: !sensorStatuses.legSensor
+        ? angles.legAngle
+        : appSettings.invertLeg
+        ? -legAngle
+        : legAngle,
     });
   }, [sensorData]);
 
@@ -173,13 +182,32 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
     computeDisplayAngles();
 
     // every Angle_DB_STORE_PERIOD angle reads store in database
-    if (dbStoreCount.current > ANGLE_DB_STORE_PERIOD) {
+    if (dbStoreCount.current > ANGLE_DB_STORE_PERIOD_COUNT) {
       storeAngleData(angles.backAngle, angles.seatAngle, angles.legAngle);
+      // storeAngleData(angles.backAngle, angles.seatAngle, angles.legAngle);
       dbStoreCount.current = 0;
       return;
     }
     dbStoreCount.current++;
   }, [angles]);
+
+  useEffect(() => {
+    // dont handle notifcations if disabled
+    if (!appSettings.notificationsEnabled) return;
+    //dont care about sensor status if device is not connected
+    if (!connected) return;
+
+    if (
+      !sensorStatuses.backSensor ||
+      !sensorStatuses.seatSensor ||
+      !sensorStatuses.legSensor
+    ) {
+      schedulePushNotification({
+        title: "Sensor(s) Disconnected",
+        body: "A sensor has been disconnected",
+      });
+    }
+  }, [sensorStatuses]);
 
   const connectToDevice = async () => {
     const isPermissionsEnabled = await requestPermissions();
@@ -291,7 +319,6 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
       }
     } catch (e) {
       console.log("FAILED TO CONNECT", e);
-      /************************************************************************************************ */
     }
   };
 
@@ -333,53 +360,53 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
         });
       });
 
-      statusCharacteristic?.read().then((c) => {
+      angleCharacteristic?.read().then((c) => {
         const floats = decodeAngleData(c);
 
         setSensorData(floats);
 
-        console.log("Decoded Floats:", floats);
+        //console.log("Decoded Floats:", floats);
       });
 
-      characteristics.forEach(
-        (x) => {
-          if (x.uuid === ANGLE_UUID) {
-            x.read().then((c) => {
-              const floats = decodeAngleData(c);
+      // characteristics.forEach(
+      //   (x) => {
+      //     if (x.uuid === ANGLE_UUID) {
+      //       x.read().then((c) => {
+      //         const floats = decodeAngleData(c);
 
-              console.log("Decoded Floats:", floats);
+      //         console.log("Decoded Floats:", floats);
 
-              setSensorData(floats);
-              // const rawBytes = Buffer.from(c.value, "base64");
-              // const hexString = rawBytes.toString("hex");
-              // const bytes = [];
-              // for (let i = 0; i < hexString.length; i += 2) {
-              //   bytes.push(parseInt(hexString.slice(i, i + 2), 16));
-              // }
-              // const floats = [];
-              // for (let i = 0; i < bytes.length; i += 4) {
-              //   floats.push(bytes2Float(bytes.slice(i, i + 4)));
-              // }
-              // console.log("Decoded Floats:", floats);
-              // setSensorData(floats);
-            });
-          } else if (x.uuid === STATUS_UUID) {
-            x.read().then((c) => {
-              if (!c.value) {
-                console.log("Empty Status Value");
-                return;
-              }
+      //         setSensorData(floats);
+      //         // const rawBytes = Buffer.from(c.value, "base64");
+      //         // const hexString = rawBytes.toString("hex");
+      //         // const bytes = [];
+      //         // for (let i = 0; i < hexString.length; i += 2) {
+      //         //   bytes.push(parseInt(hexString.slice(i, i + 2), 16));
+      //         // }
+      //         // const floats = [];
+      //         // for (let i = 0; i < bytes.length; i += 4) {
+      //         //   floats.push(bytes2Float(bytes.slice(i, i + 4)));
+      //         // }
+      //         // console.log("Decoded Floats:", floats);
+      //         // setSensorData(floats);
+      //       });
+      //     } else if (x.uuid === STATUS_UUID) {
+      //       x.read().then((c) => {
+      //         if (!c.value) {
+      //           console.log("Empty Status Value");
+      //           return;
+      //         }
 
-              //const rawData = Buffer.from(c.value, "base64");
+      //         //const rawData = Buffer.from(c.value, "base64");
 
-              //setSensorStatuses(rawData);
-            });
-          }
-        }
+      //         //setSensorStatuses(rawData);
+      //       });
+      //     }
+      //   }
 
-        //onAngleChange(x.read())
-        //x.monitor((c, e) => onAngleChange(c, e))
-      );
+      //onAngleChange(x.read())
+      //x.monitor((c, e) => onAngleChange(c, e))
+      // );
     });
   };
 
@@ -405,7 +432,16 @@ export const BLEProvider = ({ children }: BLEProviderProps) => {
 
   const decodeSensorStatusData = (c: Characteristic) => {
     if (!c.value) return [0, 0, 0];
-    return [1, 1, 1];
+    // return [1, 1, 1];
+
+    // Convert base64 to Uint8Array
+    const buffer = Buffer.from(c.value, "base64");
+    const bytes = new Uint8Array(buffer);
+
+    // Convert bytes to 0 or 1 based on their value
+    const result = Array.from(bytes).map((byte) => (byte === 0 ? 0 : 1));
+
+    return result;
   };
 
   const bytes2Float = (byteArray: number[]): number => {

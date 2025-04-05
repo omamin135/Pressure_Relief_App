@@ -1,8 +1,8 @@
 import { Text, View, StyleSheet } from "react-native";
 import { useBLE } from "../bluetooth/BLEProvider";
 import { usePressureReliefStates } from "../state/PressureReliefStatesProvider";
-import Card from "./Card";
-import Chip from "./Chip";
+import Card from "../components/Card";
+import Chip from "../components/Chip";
 import useColors from "../theme/useColors";
 
 const StatusSummary = () => {
@@ -19,7 +19,7 @@ const StatusSummary = () => {
     <Card>
       <View style={styles.container}>
         <Text style={{ ...styles.tiltLabel, color: colors.text.primary }}>
-          Seat Tilt: {displayAngles.seatAngle}°{" "}
+          Overall Tilt: {displayAngles.seatAngle.toFixed(0)}°
         </Text>
         <Text style={{ ...styles.stateLabel, color: colors.text.primary }}>
           {pressureReliefMode

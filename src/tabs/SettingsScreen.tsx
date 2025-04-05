@@ -19,6 +19,9 @@ import StyledSwitch from "../components/StyledSwitch";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import StyledNumberInput from "../components/app-settings/StyledNumberInput";
 import PageHeader from "../components/PageHeader";
+import StyledToggler from "../components/app-settings/StyledToggler";
+import SegmentedControl from "../components/SegmentedControl";
+import StyledSegmentContrtoller from "../components/app-settings/StyledSegmentedControl";
 
 const reliefDurationSecOptions = [
   { label: "DEBUG 15 seconds", value: 15 },
@@ -71,6 +74,12 @@ const tiltThesholdOptions = [
   { label: "60°", value: 60 },
 ];
 
+const sensorAxisOptions = [
+  { label: "x-axis", value: 0 },
+  { label: "y-axis", value: 1 },
+  // { label: "z-axis", value: 2 },
+];
+
 // Notifications
 // durations
 // upright
@@ -102,6 +111,18 @@ const SettingsScreen = () => {
     appSettings.tiltThreshold
   );
 
+  const [sensorContolledState, setSensorContolledState] = useState<boolean>(
+    appSettings.sensorControlledState
+  );
+
+  const [backIndex, setBackIndex] = useState<number>(appSettings.backIndex);
+  const [seatIndex, setSeatIndex] = useState<number>(appSettings.seatIndex);
+  const [legIndex, setLegIndex] = useState<number>(appSettings.legIndex);
+
+  const [invertBack, setInvertBack] = useState<boolean>(appSettings.invertBack);
+  const [invertSeat, setInvertSeat] = useState<boolean>(appSettings.invertBack);
+  const [invertLeg, setInvertLeg] = useState<boolean>(appSettings.invertBack);
+
   // update the appSettings context to changes
   useEffect(() => {
     setSettings({
@@ -111,6 +132,13 @@ const SettingsScreen = () => {
       onTimeToleranceSec: onTimeToleranceSec,
       goalNumberDailyRoutines: goalNumberDailyRoutines,
       tiltThreshold: tiltTheshold,
+      sensorControlledState: sensorContolledState,
+      backIndex: backIndex,
+      seatIndex: seatIndex,
+      legIndex: legIndex,
+      invertBack: invertBack,
+      invertSeat: invertSeat,
+      invertLeg: invertLeg,
     });
   }, [
     notificationsEnabled,
@@ -119,6 +147,13 @@ const SettingsScreen = () => {
     onTimeToleranceSec,
     goalNumberDailyRoutines,
     tiltTheshold,
+    sensorContolledState,
+    backIndex,
+    legIndex,
+    seatIndex,
+    invertBack,
+    invertSeat,
+    invertLeg,
   ]);
 
   return (
@@ -188,7 +223,7 @@ const SettingsScreen = () => {
                   onToggle={setNotificationsEnabled}
                   color={colors.secondary.main}
                   accessibilityLabel="Toggle Notifications"
-                  assessabilityHint="Enable or disable notifications"
+                  assessibilityHint="Enable or disable notifications"
                 ></StyledSwitch>
               </View>
             </View>
@@ -224,46 +259,104 @@ const SettingsScreen = () => {
               ></StyledNumberInput>
             </View>
 
-            {/* <View>
-        <View>
-          
-      <SleepTimePicker></SleepTimePicker>
-      <View>
-            <Text>Sleep Mode</Text>
-            <MultiSlider
-              values={[3, 5]}
-              isMarkersSeparated={true}
-            ></MultiSlider>
-          </View>
-
-      <View>
-            <Text>Relief Duration</Text>
-            <Text>{reliefDurationSeconds}</Text>
-            <MultiSlider
-              min={MIN_PRESSURE_RELIEF_DURATION_SEC}
-              max={MAX_PRESSURE_RELIEF_DURATION_SEC}
-              step={PRESSURE_RELIEF_DURATION_STEP}
-              values={[reliefDurationSeconds]}
-              onValuesChange={(value) => setReliefDurationSeconds(value[0])}
-              snapped
-              allowOverlap
-            ></MultiSlider>
-          </View>
-          <View>
-            <Text>Rest Duration</Text>
-            <Text>{reliefIntervalMin}</Text>
-            <MultiSlider
-              min={MIN_PRESSURE_RELIEF_INTERVAL_MIN}
-              max={MAX_PRESSURE_RELIEF_INTERVAL_MIN}
-              step={PRESSURE_RELIEF_INTERVAL_STEP}
-              values={[reliefIntervalMin]}
-              onValuesChange={(value) => setReliefIntervalMin(value[0])}
-              snapped
-              allowOverlap
-            ></MultiSlider>
-          </View>
-      </View>
-      </View> */}
+            <View
+              style={{
+                ...styles.sectionContainer,
+                backgroundColor: colors.background.secondary,
+              }}
+            >
+              <Text
+                style={{
+                  ...styles.sectionHeader,
+                  color: colors.text.primary,
+                }}
+              >
+                Sensor Controls
+              </Text>
+              <StyledToggler
+                title="Sensor Controlled State"
+                subtitle="Sensors automatically change stetae between upright and pressure relief"
+                value={sensorContolledState}
+                onToggle={setSensorContolledState}
+                accessibilityLabel="Sensor Controlled State"
+                accessibilityHint="Sensors automatically change stetae between upright and pressure relief"
+              ></StyledToggler>
+              <View
+                style={{ ...styles.divider, borderColor: colors.text.primary }}
+              ></View>
+              <View style={styles.axisContainer}>
+                <StyledSegmentContrtoller
+                  title="Back Axis"
+                  subtitle="Rotational axis for the back sensor"
+                  value={appSettings.backIndex}
+                  options={sensorAxisOptions}
+                  onValueChange={setBackIndex}
+                ></StyledSegmentContrtoller>
+                <View style={styles.axisToggleContainer}>
+                  <Text
+                    style={{
+                      ...styles.axisInvertText,
+                      color: colors.text.primary,
+                    }}
+                  >
+                    Invert Angle
+                  </Text>
+                  <StyledSwitch
+                    value={invertBack}
+                    onToggle={setInvertBack}
+                    color={colors.secondary.main}
+                  ></StyledSwitch>
+                </View>
+              </View>
+              <View style={styles.axisContainer}>
+                <StyledSegmentContrtoller
+                  title="Seat Axis"
+                  subtitle="Rotational axis for the seat sensor"
+                  value={appSettings.seatIndex}
+                  options={sensorAxisOptions}
+                  onValueChange={setSeatIndex}
+                ></StyledSegmentContrtoller>
+                <View style={styles.axisToggleContainer}>
+                  <Text
+                    style={{
+                      ...styles.axisInvertText,
+                      color: colors.text.primary,
+                    }}
+                  >
+                    Invert Angle
+                  </Text>
+                  <StyledSwitch
+                    value={invertSeat}
+                    onToggle={setInvertSeat}
+                    color={colors.secondary.main}
+                  ></StyledSwitch>
+                </View>
+              </View>
+              <View style={styles.axisContainer}>
+                <StyledSegmentContrtoller
+                  title="Leg Axis"
+                  subtitle="Rotational axis for the leg sensor"
+                  value={appSettings.legIndex}
+                  options={sensorAxisOptions}
+                  onValueChange={setLegIndex}
+                ></StyledSegmentContrtoller>
+                <View style={styles.axisToggleContainer}>
+                  <Text
+                    style={{
+                      ...styles.axisInvertText,
+                      color: colors.text.primary,
+                    }}
+                  >
+                    Invert Angle
+                  </Text>
+                  <StyledSwitch
+                    value={invertLeg}
+                    onToggle={setInvertLeg}
+                    color={colors.secondary.main}
+                  ></StyledSwitch>
+                </View>
+              </View>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -299,6 +392,29 @@ const styles = StyleSheet.create({
   notificationLabel: {
     fontSize: 16,
     fontWeight: "500",
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 20,
+  },
+  divider: {
+    borderBottomWidth: 1,
+    marginVertical: 4,
+  },
+  axisContainer: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  axisInvertText: {
+    fontWeight: "500",
+  },
+  axisToggleContainer: {
+    flex: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
   },
 });
 

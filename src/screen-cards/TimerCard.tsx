@@ -46,6 +46,8 @@ const TimerCard = () => {
           body: "Reminder to perform your pressure relief routine",
         });
       }
+      //clear state lock on end of timer
+      setStateLock(false);
       storePressureReliefTime();
     } else if (
       pressureReliefMode &&
@@ -57,7 +59,8 @@ const TimerCard = () => {
           body: "You may stop your pressure relief routine",
         });
       }
-      setPressureReliefState(false);
+      //clear state lock on end of timer
+      setStateLock(false);
     }
 
     if (pressureReliefMode) {
@@ -68,8 +71,7 @@ const TimerCard = () => {
   }, [time]);
 
   const togglePressureReliefState = () => {
-    // clear the stat lock if manually returnign back to resting state
-    if (pressureReliefMode) setStateLock(false);
+    setStateLock(true);
     setPressureReliefState(!pressureReliefMode);
   };
 
@@ -90,6 +92,7 @@ const TimerCard = () => {
   };
 
   const resetTimer = () => {
+    setStateLock(false);
     startTimeRef.current = Date.now();
   };
 
@@ -124,6 +127,8 @@ const TimerCard = () => {
             : appSettings.reliefIntervalMin * 60 - time < 0 &&
               !pressureReliefMode
             ? "Start Routine Now"
+            : appSettings.reliefDurationSeconds - time < 0 && pressureReliefMode
+            ? "Come Back Upright"
             : pressureReliefMode
             ? "Routine Started"
             : "Upright"}
@@ -215,7 +220,7 @@ const TimerCard = () => {
             label="Pause Tracking"
             color={colors.primary.main}
             accessibilityLabel="Pause Tracking"
-            assessabilityHint="Pauses the tracking state"
+            assessibilityHint="Pauses the tracking state"
             onToggle={(paused) => {
               togglePausedState();
               if (paused) {
