@@ -1,4 +1,11 @@
-import { View, Text, SafeAreaView, ScrollView, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Button,
+} from "react-native";
 import { useBLE } from "../bluetooth/BLEProvider";
 import Chip from "../components/Chip";
 import Card from "../components/Card";
@@ -6,6 +13,7 @@ import StyledButton from "../components/StyledButton";
 import useColors from "../theme/useColors";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import PageHeader from "../components/PageHeader";
+import { useDatabase } from "../dataBase/DataBaseProvider";
 
 const BluetoothScreen = () => {
   const colors = useColors();
@@ -19,12 +27,16 @@ const BluetoothScreen = () => {
     disconnectFromDevice,
   } = useBLE();
 
+  const { getAngles, deleteAngles } = useDatabase();
+
   return (
     <SafeAreaProvider>
       <SafeAreaView>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View style={styles.pageContainer}>
             <PageHeader headerText="Bluetooth Connection" />
+            {/* <Button title="get angles" onPress={getAngles}></Button>
+            <Button title="delete" onPress={deleteAngles}></Button> */}
             <Card>
               <View style={styles.headerCardContainer}>
                 <Text
